@@ -103,5 +103,8 @@ venv.bak/
 # mypy
 .mypy_cache/
 
+# pickled files
+*.pkl
+
 # heavy data files
 *db_iris_all.zip
