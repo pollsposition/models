@@ -14,7 +14,7 @@ dependencies:
     - arviz==0.7.0
     - bokeh==1.4.0
     - fiona
-    - geopandas=0.6.1
+    - geopandas
     - pymc3==3.8
     - theano==1.0.4
     - voila==0.1.20
