@@ -111,3 +111,6 @@ venv.bak/
 
 # binder links
 binder-links.rtf
+
+# PDF papers
+/papers/*.pdf
