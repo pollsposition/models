@@ -22,5 +22,6 @@ dependencies:
   - voila
   - watermark
   - xarray
+  - xlrd
   - pip:
     - black_nbconvert
