@@ -11,6 +11,7 @@ dependencies:
   - jupyterlab 
   - matplotlib
   - numpy
+  - openpyxl
   - pandas
   - pip
   - pymc3
