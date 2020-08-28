@@ -114,3 +114,6 @@ binder-links.rtf
 
 # PDF papers
 /papers/*.pdf
+
+# NetCDF files
+*.nc
