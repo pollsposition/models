@@ -8,18 +8,20 @@ dependencies:
   - bokeh
   - fiona
   - geopandas
-  - jupyterlab 
+  - jupyterlab
+  - libblas=*=*mkl
   - matplotlib
+  - mkl-service
   - numpy
   - openpyxl
   - pandas
   - pip
-  - pymc3
+  - pymc3>=3.9
   - python>=3.7
   - python-graphviz
   - scipy
   - shapely
-  - theano>=1.0.4
+  - theano>=1.0.5
   - voila
   - watermark
   - xarray
