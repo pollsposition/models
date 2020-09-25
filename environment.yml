@@ -10,6 +10,7 @@ dependencies:
   - geopandas
   - jupyterlab
   - libblas=*=*mkl
+  - lxml
   - matplotlib
   - mkl-service
   - numpy
