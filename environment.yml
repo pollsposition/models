@@ -3,7 +3,7 @@ channels:
   - conda-forge
   - defaults
 dependencies:
-  - arviz>=0.9
+  - arviz>=0.10
   - black
   - bokeh
   - fiona
