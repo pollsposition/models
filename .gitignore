@@ -117,3 +117,6 @@ binder-links.rtf
 
 # NetCDF files
 *.nc
+
+# PyMCon Presentation material
+/pymcon-presentation
