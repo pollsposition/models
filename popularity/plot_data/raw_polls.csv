@@ -1,0 +1,1029 @@
+,president,sondage,samplesize,method,p_approve,p_disapprove
+2002-05-15,chirac2,Ifop,924,phone,0.51,0.44
+2002-05-20,chirac2,Kantar,972,face to face,0.5,0.48
+2002-05-23,chirac2,BVA,1054,phone,0.52,0.37
+2002-05-26,chirac2,Ipsos,907,phone,0.48,0.48
+2002-06-16,chirac2,Ifop,974,phone,0.49,0.43
+2002-06-17,chirac2,Ipsos,1050,phone,0.53,0.4
+2002-06-20,chirac2,BVA,938,phone,0.53,0.36
+2002-06-27,chirac2,Kantar,918,face to face,0.47,0.51
+2002-07-18,chirac2,Ifop,989,phone,0.53,0.38
+2002-07-19,chirac2,Ipsos,933,phone,0.53,0.39
+2002-07-26,chirac2,Kantar,920,face to face,0.54,0.45
+2002-08-13,chirac2,Ipsos,1008,phone,0.56,0.34
+2002-08-20,chirac2,Ifop,977,phone,0.53,0.4
+2002-08-28,chirac2,Kantar,1099,face to face,0.47,0.51
+2002-09-15,chirac2,Ifop,1095,phone,0.52,0.42
+2002-09-20,chirac2,BVA,1037,phone,0.56,0.37
+2002-09-24,chirac2,Ipsos,967,phone,0.52,0.41
+2002-09-26,chirac2,Kantar,971,face to face,0.5,0.48
+2002-10-16,chirac2,Ifop,1079,phone,0.57,0.37
+2002-10-22,chirac2,Ipsos,1051,phone,0.54,0.38
+2002-10-23,chirac2,BVA,906,phone,0.53,0.4
+2002-10-26,chirac2,Kantar,903,face to face,0.49,0.48
+2002-11-16,chirac2,Ifop,1014,phone,0.56,0.37
+2002-11-20,chirac2,BVA,930,phone,0.56,0.36
+2002-11-23,chirac2,Ipsos,1006,phone,0.62,0.33
+2002-11-27,chirac2,Kantar,964,face to face,0.47,0.5
+2002-12-17,chirac2,Ifop,951,phone,0.57,0.36
+2002-12-20,chirac2,Kantar,1100,face to face,0.52,0.45
+2002-12-22,chirac2,BVA,1064,phone,0.61,0.32
+2002-12-23,chirac2,Ipsos,1081,phone,0.6,0.36
+2003-01-10,chirac2,Ipsos,1029,phone,0.58,0.34
+2003-01-16,chirac2,Ifop,940,phone,0.6,0.33
+2003-01-20,chirac2,BVA,926,phone,0.58,0.36
+2003-01-21,chirac2,Kantar,985,face to face,0.5,0.49
+2003-02-16,chirac2,Ifop,965,phone,0.57,0.35
+2003-02-24,chirac2,Kantar,903,face to face,0.55,0.42
+2003-02-26,chirac2,Ipsos,947,phone,0.62,0.33
+2003-02-27,chirac2,BVA,983,phone,0.61,0.31
+2003-03-15,chirac2,Ipsos,976,phone,0.69,0.25
+2003-03-19,chirac2,BVA,923,phone,0.69,0.25
+2003-03-20,chirac2,Ifop,1091,phone,0.67,0.27
+2003-03-28,chirac2,Kantar,982,face to face,0.6,0.37
+2003-04-15,chirac2,Ifop,1087,phone,0.65,0.27
+2003-04-15,chirac2,Ipsos,1058,phone,0.7,0.25
+2003-04-20,chirac2,Kantar,1073,face to face,0.53,0.44
+2003-04-25,chirac2,BVA,1013,phone,0.66,0.28
+2003-05-18,chirac2,Ifop,978,phone,0.58,0.36
+2003-05-22,chirac2,Ipsos,918,phone,0.68,0.28
+2003-05-23,chirac2,Kantar,946,face to face,0.49,0.49
+2003-05-28,chirac2,BVA,946,phone,0.64,0.28
+2003-06-10,chirac2,Ipsos,1064,phone,0.61,0.35
+2003-06-19,chirac2,BVA,932,phone,0.6,0.3
+2003-06-19,chirac2,Ifop,949,phone,0.56,0.37
+2003-06-25,chirac2,Kantar,1076,face to face,0.47,0.5
+2003-07-18,chirac2,Ipsos,1027,phone,0.57,0.37
+2003-07-19,chirac2,Ifop,966,phone,0.56,0.4
+2003-07-21,chirac2,BVA,1076,phone,0.57,0.34
+2003-07-27,chirac2,Kantar,987,face to face,0.5,0.48
+2003-08-18,chirac2,Ifop,1071,phone,0.54,0.42
+2003-08-20,chirac2,Ipsos,1036,phone,0.53,0.41
+2003-08-20,chirac2,Kantar,1085,face to face,0.46,0.51
+2003-09-15,chirac2,Ipsos,1086,phone,0.55,0.4
+2003-09-17,chirac2,Ifop,949,phone,0.5,0.47
+2003-09-23,chirac2,Kantar,1092,face to face,0.43,0.54
+2003-09-29,chirac2,BVA,1085,phone,0.52,0.39
+2003-10-12,chirac2,Ipsos,1005,phone,0.5,0.42
+2003-10-18,chirac2,BVA,980,phone,0.51,0.39
+2003-10-19,chirac2,Ifop,1020,phone,0.49,0.48
+2003-10-25,chirac2,Kantar,1035,face to face,0.4,0.59
+2003-11-16,chirac2,Ifop,1024,phone,0.49,0.48
+2003-11-22,chirac2,Ipsos,1008,phone,0.52,0.43
+2003-11-23,chirac2,BVA,995,phone,0.5,0.41
+2003-11-28,chirac2,Kantar,1094,face to face,0.4,0.58
+2003-12-18,chirac2,Ifop,929,phone,0.5,0.48
+2003-12-20,chirac2,Ipsos,1043,phone,0.52,0.4
+2003-12-23,chirac2,BVA,918,phone,0.53,0.39
+2003-12-27,chirac2,Kantar,947,face to face,0.43,0.55
+2004-01-12,chirac2,Ipsos,901,phone,0.58,0.38
+2004-01-17,chirac2,BVA,1001,phone,0.53,0.39
+2004-01-20,chirac2,Ifop,956,phone,0.53,0.45
+2004-01-21,chirac2,Kantar,978,face to face,0.39,0.59
+2004-02-10,chirac2,Ipsos,1081,phone,0.51,0.45
+2004-02-19,chirac2,Ifop,914,phone,0.47,0.51
+2004-02-26,chirac2,Kantar,1012,face to face,0.35,0.62
+2004-03-16,chirac2,Ifop,1038,phone,0.48,0.49
+2004-03-23,chirac2,Kantar,948,face to face,0.4,0.57
+2004-03-27,chirac2,Ipsos,1071,phone,0.46,0.48
+2004-03-30,chirac2,BVA,1055,phone,0.46,0.45
+2004-04-15,chirac2,Ipsos,1047,phone,0.46,0.51
+2004-04-20,chirac2,Ifop,1004,phone,0.44,0.53
+2004-04-21,chirac2,Kantar,1043,face to face,0.32,0.65
+2004-04-28,chirac2,BVA,951,phone,0.42,0.5
+2004-05-10,chirac2,Ipsos,1004,phone,0.5,0.46
+2004-05-18,chirac2,Ifop,922,phone,0.43,0.53
+2004-05-22,chirac2,Kantar,950,face to face,0.35,0.62
+2004-06-18,chirac2,Ipsos,941,phone,0.51,0.44
+2004-06-19,chirac2,Ifop,970,phone,0.45,0.51
+2004-06-23,chirac2,BVA,959,phone,0.46,0.46
+2004-06-23,chirac2,Kantar,954,face to face,0.34,0.64
+2004-07-16,chirac2,Ifop,928,phone,0.49,0.49
+2004-07-22,chirac2,Ipsos,1078,phone,0.49,0.45
+2004-07-26,chirac2,Kantar,921,face to face,0.37,0.61
+2004-08-18,chirac2,Ifop,915,phone,0.49,0.48
+2004-08-20,chirac2,Ipsos,1080,phone,0.49,0.46
+2004-08-26,chirac2,Kantar,1062,face to face,0.36,0.62
+2004-09-16,chirac2,Ifop,1092,phone,0.43,0.53
+2004-09-18,chirac2,BVA,1043,phone,0.54,0.37
+2004-09-20,chirac2,Kantar,992,face to face,0.36,0.61
+2004-09-25,chirac2,Ipsos,1049,phone,0.54,0.4
+2004-10-11,chirac2,Ipsos,981,phone,0.53,0.41
+2004-10-15,chirac2,BVA,1067,phone,0.53,0.39
+2004-10-20,chirac2,Ifop,946,phone,0.41,0.56
+2004-10-25,chirac2,Kantar,1086,face to face,0.36,0.62
+2004-11-15,chirac2,Ipsos,1097,phone,0.52,0.43
+2004-11-18,chirac2,BVA,1070,phone,0.54,0.39
+2004-11-19,chirac2,Ifop,958,phone,0.48,0.48
+2004-11-20,chirac2,Kantar,963,face to face,0.38,0.6
+2004-12-15,chirac2,BVA,1080,phone,0.57,0.36
+2004-12-18,chirac2,Ifop,980,phone,0.5,0.47
+2004-12-18,chirac2,Ipsos,963,phone,0.54,0.4
+2004-12-24,chirac2,Kantar,955,face to face,0.41,0.56
+2005-01-15,chirac2,Ifop,1053,phone,0.49,0.49
+2005-01-22,chirac2,BVA,1035,phone,0.55,0.37
+2005-01-24,chirac2,Ipsos,917,phone,0.53,0.4
+2005-01-24,chirac2,Kantar,1039,face to face,0.37,0.59
+2005-02-15,chirac2,Ipsos,960,phone,0.49,0.43
+2005-02-17,chirac2,Ifop,938,phone,0.47,0.48
+2005-02-22,chirac2,Kantar,917,face to face,0.36,0.61
+2005-02-26,chirac2,BVA,1076,phone,0.5,0.4
+2005-03-16,chirac2,Ifop,978,phone,0.42,0.54
+2005-03-22,chirac2,Ipsos,1063,phone,0.49,0.44
+2005-03-23,chirac2,Kantar,1074,face to face,0.36,0.62
+2005-03-24,chirac2,BVA,937,phone,0.5,0.45
+2005-04-16,chirac2,Ifop,1089,phone,0.45,0.52
+2005-04-19,chirac2,BVA,990,phone,0.48,0.46
+2005-04-25,chirac2,Ipsos,1030,phone,0.48,0.49
+2005-04-26,chirac2,Kantar,1052,face to face,0.32,0.66
+2005-05-15,chirac2,Ifop,1026,phone,0.4,0.59
+2005-05-20,chirac2,BVA,1001,phone,0.39,0.56
+2005-05-24,chirac2,Ipsos,1002,phone,0.47,0.51
+2005-05-28,chirac2,Kantar,1081,face to face,0.24,0.74
+2005-06-15,chirac2,BVA,956,phone,0.35,0.59
+2005-06-20,chirac2,Ifop,1030,phone,0.28,0.7
+2005-06-24,chirac2,Ipsos,909,phone,0.27,0.69
+2005-06-24,chirac2,Kantar,927,face to face,0.21,0.77
+2005-07-13,chirac2,Ipsos,1060,phone,0.32,0.63
+2005-07-16,chirac2,Ifop,959,phone,0.32,0.66
+2005-07-25,chirac2,BVA,1004,phone,0.36,0.56
+2005-07-25,chirac2,Kantar,911,face to face,0.28,0.69
+2005-08-15,chirac2,Ifop,1048,phone,0.35,0.64
+2005-08-21,chirac2,Ipsos,966,phone,0.39,0.55
+2005-08-27,chirac2,Kantar,1036,face to face,0.26,0.71
+2005-09-17,chirac2,BVA,1070,phone,0.46,0.47
+2005-09-17,chirac2,Ifop,1035,phone,0.37,0.61
+2005-09-23,chirac2,Ipsos,915,phone,0.42,0.53
+2005-09-24,chirac2,Kantar,901,face to face,0.26,0.72
+2005-10-16,chirac2,Ifop,951,phone,0.38,0.61
+2005-10-19,chirac2,Ipsos,1009,phone,0.33,0.62
+2005-10-20,chirac2,Kantar,1028,face to face,0.24,0.74
+2005-10-23,chirac2,BVA,972,phone,0.39,0.54
+2005-11-18,chirac2,Ifop,935,phone,0.35,0.64
+2005-11-24,chirac2,Ipsos,937,phone,0.39,0.58
+2005-11-24,chirac2,Kantar,937,face to face,0.26,0.72
+2005-11-27,chirac2,BVA,904,phone,0.39,0.54
+2005-12-13,chirac2,Ipsos,975,phone,0.4,0.53
+2005-12-16,chirac2,Ifop,935,phone,0.33,0.65
+2005-12-22,chirac2,Kantar,1064,face to face,0.21,0.77
+2005-12-28,chirac2,BVA,1052,phone,0.36,0.55
+2006-01-16,chirac2,Ifop,905,phone,0.37,0.61
+2006-01-17,chirac2,Ipsos,987,phone,0.38,0.57
+2006-01-19,chirac2,BVA,1043,phone,0.4,0.52
+2006-01-24,chirac2,Kantar,911,face to face,0.21,0.77
+2006-02-18,chirac2,BVA,953,phone,0.39,0.53
+2006-02-19,chirac2,Ipsos,971,phone,0.41,0.56
+2006-02-20,chirac2,Ifop,971,phone,0.37,0.61
+2006-02-26,chirac2,Kantar,933,face to face,0.23,0.75
+2006-03-17,chirac2,Ifop,982,phone,0.39,0.6
+2006-03-21,chirac2,Ipsos,1062,phone,0.4,0.57
+2006-03-27,chirac2,Kantar,914,face to face,0.2,0.78
+2006-04-11,chirac2,Ipsos,1097,phone,0.29,0.67
+2006-04-17,chirac2,Ifop,905,phone,0.29,0.7
+2006-04-26,chirac2,BVA,1055,phone,0.36,0.56
+2006-04-28,chirac2,Kantar,1031,face to face,0.19,0.8
+2006-05-16,chirac2,Ifop,964,phone,0.29,0.7
+2006-05-17,chirac2,Ipsos,1068,phone,0.32,0.65
+2006-05-25,chirac2,Kantar,991,face to face,0.17,0.81
+2006-05-26,chirac2,BVA,1096,phone,0.32,0.58
+2006-06-18,chirac2,Ifop,927,phone,0.27,0.7
+2006-06-18,chirac2,Ipsos,1023,phone,0.32,0.64
+2006-06-21,chirac2,Kantar,1092,face to face,0.16,0.81
+2006-06-27,chirac2,BVA,972,phone,0.35,0.57
+2006-07-16,chirac2,Ifop,958,phone,0.38,0.61
+2006-07-22,chirac2,Kantar,993,face to face,0.21,0.77
+2006-07-23,chirac2,Ipsos,984,phone,0.38,0.58
+2006-08-15,chirac2,Ifop,1074,phone,0.36,0.63
+2006-08-24,chirac2,Kantar,1019,face to face,0.25,0.73
+2006-08-26,chirac2,Ipsos,904,phone,0.41,0.55
+2006-09-20,chirac2,Ifop,1022,phone,0.38,0.61
+2006-09-24,chirac2,Ipsos,956,phone,0.41,0.55
+2006-09-24,chirac2,Kantar,1084,face to face,0.24,0.74
+2006-10-18,chirac2,Ipsos,1038,phone,0.42,0.55
+2006-10-19,chirac2,Ifop,1100,phone,0.38,0.61
+2006-10-23,chirac2,Kantar,1084,face to face,0.24,0.74
+2006-10-28,chirac2,BVA,1034,phone,0.4,0.49
+2006-11-17,chirac2,Ifop,971,phone,0.36,0.63
+2006-11-23,chirac2,Ipsos,1079,phone,0.45,0.53
+2006-11-24,chirac2,BVA,900,phone,0.43,0.49
+2006-11-25,chirac2,Kantar,1037,face to face,0.25,0.73
+2006-12-19,chirac2,Ifop,941,phone,0.38,0.61
+2006-12-20,chirac2,Kantar,1091,face to face,0.23,0.75
+2006-12-24,chirac2,Ipsos,1036,phone,0.46,0.51
+2007-01-15,chirac2,Ifop,1041,phone,0.41,0.57
+2007-01-20,chirac2,Ipsos,1018,phone,0.41,0.56
+2007-01-20,chirac2,Kantar,1098,face to face,0.25,0.72
+2007-02-15,chirac2,Ifop,1013,phone,0.43,0.56
+2007-02-22,chirac2,Ipsos,1024,phone,0.46,0.5
+2007-02-22,chirac2,Kantar,1013,face to face,0.29,0.69
+2007-03-15,chirac2,Ifop,1026,phone,0.46,0.53
+2007-03-24,chirac2,Kantar,950,face to face,0.3,0.67
+2007-03-25,chirac2,Ipsos,992,phone,0.53,0.45
+2007-04-15,chirac2,Ifop,969,phone,0.47,0.52
+2007-04-22,chirac2,Ipsos,1011,phone,0.53,0.45
+2007-04-25,chirac2,Kantar,904,face to face,0.3,0.64
+2007-05-16,sarkozy,Ifop,1001,phone,0.65,0.31
+2007-05-20,sarkozy,Kantar,982,face to face,0.63,0.34
+2007-05-24,sarkozy,Ipsos,1086,phone,0.64,0.24
+2007-06-20,sarkozy,Ifop,1003,phone,0.65,0.34
+2007-06-20,sarkozy,Kantar,943,face to face,0.65,0.31
+2007-06-22,sarkozy,Ipsos,912,phone,0.61,0.31
+2007-07-18,sarkozy,Ifop,1046,phone,0.66,0.3
+2007-07-23,sarkozy,Ipsos,936,phone,0.66,0.25
+2007-07-25,sarkozy,Kantar,908,face to face,0.64,0.33
+2007-08-17,sarkozy,Ifop,907,phone,0.69,0.29
+2007-08-20,sarkozy,Kantar,950,face to face,0.64,0.32
+2007-08-27,sarkozy,Ipsos,1067,phone,0.61,0.3
+2007-09-15,sarkozy,BVA,926,phone,0.57,0.33
+2007-09-18,sarkozy,Ipsos,982,phone,0.64,0.3
+2007-09-19,sarkozy,Ifop,918,phone,0.61,0.36
+2007-09-27,sarkozy,Kantar,984,face to face,0.57,0.4
+2007-10-13,sarkozy,Ipsos,1052,phone,0.63,0.34
+2007-10-17,sarkozy,BVA,1077,phone,0.55,0.37
+2007-10-18,sarkozy,Ifop,904,phone,0.59,0.39
+2007-10-20,sarkozy,Kantar,1016,face to face,0.53,0.42
+2007-11-17,sarkozy,Ifop,1060,phone,0.55,0.44
+2007-11-19,sarkozy,Ipsos,1091,phone,0.58,0.39
+2007-11-23,sarkozy,BVA,914,phone,0.55,0.38
+2007-11-24,sarkozy,Kantar,1091,face to face,0.49,0.49
+2007-12-16,sarkozy,Ifop,942,phone,0.52,0.47
+2007-12-20,sarkozy,Ipsos,933,phone,0.55,0.41
+2007-12-24,sarkozy,Kantar,950,face to face,0.49,0.48
+2007-12-25,sarkozy,BVA,1070,phone,0.51,0.43
+2008-01-16,sarkozy,Ifop,1020,phone,0.47,0.52
+2008-01-18,sarkozy,Ipsos,1004,phone,0.49,0.49
+2008-01-21,sarkozy,Kantar,974,face to face,0.41,0.55
+2008-01-24,sarkozy,BVA,936,phone,0.45,0.48
+2008-02-18,sarkozy,BVA,1078,phone,0.36,0.58
+2008-02-20,sarkozy,Ifop,924,phone,0.38,0.62
+2008-02-21,sarkozy,Kantar,1087,face to face,0.37,0.61
+2008-02-27,sarkozy,Ipsos,975,phone,0.39,0.58
+2008-03-16,sarkozy,Ipsos,941,phone,0.41,0.56
+2008-03-17,sarkozy,Ifop,1010,phone,0.37,0.63
+2008-03-25,sarkozy,Kantar,911,face to face,0.37,0.6
+2008-03-30,sarkozy,BVA,955,phone,0.4,0.55
+2008-04-15,sarkozy,Ipsos,972,phone,0.4,0.57
+2008-04-17,sarkozy,Ifop,919,phone,0.36,0.64
+2008-04-20,sarkozy,BVA,990,phone,0.32,0.64
+2008-04-21,sarkozy,Kantar,997,face to face,0.32,0.66
+2008-05-18,sarkozy,Ifop,1056,phone,0.35,0.64
+2008-05-23,sarkozy,BVA,1069,phone,0.35,0.6
+2008-05-24,sarkozy,Kantar,1002,face to face,0.37,0.61
+2008-05-27,sarkozy,Ipsos,1095,phone,0.4,0.58
+2008-06-18,sarkozy,Ifop,1009,phone,0.37,0.62
+2008-06-20,sarkozy,Kantar,1038,face to face,0.33,0.65
+2008-06-26,sarkozy,Ipsos,1091,phone,0.38,0.6
+2008-06-28,sarkozy,BVA,954,phone,0.36,0.59
+2008-07-17,sarkozy,BVA,1039,phone,0.35,0.6
+2008-07-18,sarkozy,Ifop,1074,phone,0.38,0.61
+2008-07-24,sarkozy,Ipsos,983,phone,0.39,0.57
+2008-08-18,sarkozy,Ifop,1086,phone,0.4,0.59
+2008-08-24,sarkozy,Kantar,1080,face to face,0.34,0.62
+2008-08-26,sarkozy,Ipsos,938,phone,0.44,0.52
+2008-09-15,sarkozy,Ifop,1048,phone,0.37,0.62
+2008-09-17,sarkozy,Ipsos,1010,phone,0.42,0.55
+2008-09-20,sarkozy,Kantar,931,face to face,0.36,0.61
+2008-09-28,sarkozy,BVA,999,phone,0.47,0.48
+2008-10-20,sarkozy,Ifop,919,phone,0.43,0.56
+2008-10-21,sarkozy,Ipsos,993,phone,0.41,0.56
+2008-10-26,sarkozy,Kantar,936,face to face,0.39,0.57
+2008-10-30,sarkozy,BVA,929,phone,0.43,0.54
+2008-11-12,sarkozy,Ipsos,948,phone,0.49,0.49
+2008-11-16,sarkozy,Ifop,1005,phone,0.44,0.56
+2008-11-17,sarkozy,BVA,917,phone,0.48,0.47
+2008-11-23,sarkozy,Kantar,1055,face to face,0.37,0.59
+2008-12-15,sarkozy,Ifop,1003,phone,0.44,0.55
+2008-12-25,sarkozy,Ipsos,975,phone,0.46,0.51
+2008-12-26,sarkozy,Kantar,1015,face to face,0.41,0.56
+2009-01-17,sarkozy,Ifop,932,phone,0.44,0.56
+2009-01-21,sarkozy,Ipsos,1033,phone,0.45,0.51
+2009-01-22,sarkozy,Kantar,984,face to face,0.37,0.6
+2009-01-25,sarkozy,BVA,955,phone,0.47,0.45
+2009-02-16,sarkozy,Ifop,964,phone,0.37,0.62
+2009-02-21,sarkozy,BVA,989,phone,0.41,0.53
+2009-02-23,sarkozy,Kantar,932,face to face,0.38,0.58
+2009-02-27,sarkozy,Ipsos,1010,phone,0.36,0.61
+2009-03-16,sarkozy,BVA,1013,phone,0.42,0.53
+2009-03-17,sarkozy,Ifop,907,phone,0.36,0.63
+2009-03-22,sarkozy,Ipsos,1095,phone,0.37,0.58
+2009-03-23,sarkozy,Kantar,1030,face to face,0.36,0.62
+2009-04-16,sarkozy,Ifop,1038,phone,0.4,0.59
+2009-04-19,sarkozy,Ipsos,1077,phone,0.43,0.55
+2009-04-23,sarkozy,Kantar,1093,face to face,0.32,0.65
+2009-04-26,sarkozy,BVA,985,phone,0.43,0.49
+2009-05-16,sarkozy,Ifop,1087,phone,0.38,0.62
+2009-05-18,sarkozy,BVA,977,phone,0.43,0.5
+2009-05-21,sarkozy,Ipsos,1080,phone,0.45,0.54
+2009-05-25,sarkozy,Kantar,1074,face to face,0.41,0.57
+2009-06-15,sarkozy,BVA,928,phone,0.45,0.51
+2009-06-19,sarkozy,Ifop,1035,phone,0.41,0.59
+2009-06-20,sarkozy,Ipsos,948,phone,0.48,0.51
+2009-06-25,sarkozy,Kantar,917,face to face,0.38,0.6
+2009-07-19,sarkozy,Ifop,953,phone,0.43,0.56
+2009-07-26,sarkozy,Ipsos,1025,phone,0.45,0.52
+2009-08-16,sarkozy,Ifop,1069,phone,0.45,0.54
+2009-08-22,sarkozy,Kantar,1080,face to face,0.39,0.57
+2009-08-23,sarkozy,Ipsos,1077,phone,0.46,0.5
+2009-09-15,sarkozy,Ipsos,1094,phone,0.46,0.51
+2009-09-19,sarkozy,Ifop,903,phone,0.39,0.6
+2009-09-20,sarkozy,Kantar,900,face to face,0.39,0.57
+2009-09-22,sarkozy,BVA,904,phone,0.47,0.49
+2009-10-17,sarkozy,Ifop,1099,phone,0.38,0.61
+2009-10-22,sarkozy,BVA,904,phone,0.42,0.54
+2009-10-24,sarkozy,Kantar,1060,face to face,0.37,0.6
+2009-10-25,sarkozy,Ipsos,961,phone,0.44,0.54
+2009-11-16,sarkozy,BVA,1010,phone,0.43,0.52
+2009-11-17,sarkozy,Ipsos,1081,phone,0.39,0.6
+2009-11-19,sarkozy,Ifop,948,phone,0.36,0.63
+2009-11-27,sarkozy,Kantar,1016,face to face,0.34,0.63
+2009-12-15,sarkozy,Ifop,1088,phone,0.37,0.62
+2009-12-23,sarkozy,Ipsos,947,phone,0.38,0.6
+2009-12-27,sarkozy,Kantar,1067,face to face,0.32,0.63
+2009-12-29,sarkozy,BVA,1013,phone,0.42,0.53
+2010-01-15,sarkozy,Ifop,1092,phone,0.38,0.61
+2010-01-27,sarkozy,Ipsos,1021,phone,0.38,0.59
+2010-01-28,sarkozy,BVA,1068,phone,0.43,0.53
+2010-01-28,sarkozy,Kantar,910,face to face,0.31,0.65
+2010-02-15,sarkozy,Ipsos,951,phone,0.39,0.59
+2010-02-17,sarkozy,Ifop,1021,phone,0.36,0.63
+2010-02-21,sarkozy,Kantar,1090,face to face,0.31,0.65
+2010-02-27,sarkozy,BVA,983,phone,0.39,0.56
+2010-03-14,sarkozy,Ipsos,987,phone,0.32,0.65
+2010-03-15,sarkozy,BVA,1048,phone,0.41,0.56
+2010-03-18,sarkozy,Ifop,917,phone,0.3,0.65
+2010-03-27,sarkozy,Kantar,1053,face to face,0.28,0.7
+2010-04-19,sarkozy,Ifop,976,phone,0.31,0.68
+2010-04-22,sarkozy,BVA,988,phone,0.4,0.57
+2010-04-27,sarkozy,Ipsos,1040,phone,0.32,0.65
+2010-04-27,sarkozy,Kantar,1087,face to face,0.3,0.67
+2010-05-12,sarkozy,Ipsos,921,phone,0.36,0.61
+2010-05-20,sarkozy,Ifop,1004,phone,0.33,0.66
+2010-05-21,sarkozy,BVA,936,phone,0.36,0.59
+2010-05-26,sarkozy,Kantar,1036,face to face,0.28,0.67
+2010-06-16,sarkozy,Ifop,994,phone,0.34,0.66
+2010-06-25,sarkozy,Ipsos,971,phone,0.35,0.63
+2010-06-28,sarkozy,Kantar,1043,face to face,0.26,0.71
+2010-07-19,sarkozy,Ifop,1043,phone,0.34,0.66
+2010-07-25,sarkozy,Ipsos,985,phone,0.35,0.61
+2010-07-26,sarkozy,BVA,1045,phone,0.33,0.64
+2010-08-10,sarkozy,Ipsos,1019,phone,0.34,0.63
+2010-08-20,sarkozy,Ifop,1089,phone,0.36,0.64
+2010-08-23,sarkozy,Kantar,1023,face to face,0.3,0.67
+2010-09-14,sarkozy,Ipsos,983,phone,0.34,0.62
+2010-09-16,sarkozy,Ifop,1015,phone,0.32,0.67
+2010-09-20,sarkozy,Kantar,969,face to face,0.26,0.72
+2010-09-21,sarkozy,BVA,995,phone,0.32,0.64
+2010-10-16,sarkozy,Ifop,915,phone,0.29,0.7
+2010-10-20,sarkozy,Ipsos,971,phone,0.31,0.65
+2010-10-24,sarkozy,Kantar,947,face to face,0.26,0.71
+2010-10-29,sarkozy,BVA,1100,phone,0.3,0.69
+2010-11-12,sarkozy,Ipsos,978,phone,0.3,0.66
+2010-11-19,sarkozy,Ifop,1080,phone,0.32,0.68
+2010-11-24,sarkozy,BVA,925,phone,0.34,0.63
+2010-11-25,sarkozy,Kantar,908,face to face,0.24,0.71
+2010-12-18,sarkozy,BVA,1040,phone,0.33,0.61
+2010-12-18,sarkozy,Ifop,1086,phone,0.31,0.69
+2010-12-22,sarkozy,Kantar,1041,face to face,0.27,0.7
+2010-12-27,sarkozy,Ipsos,981,phone,0.35,0.61
+2011-01-17,sarkozy,Ifop,910,phone,0.3,0.7
+2011-01-18,sarkozy,Ipsos,1087,phone,0.33,0.65
+2011-01-23,sarkozy,BVA,927,phone,0.34,0.61
+2011-01-23,sarkozy,Kantar,946,face to face,0.24,0.72
+2011-02-10,sarkozy,Ipsos,1042,phone,0.34,0.63
+2011-02-20,sarkozy,Ifop,1062,phone,0.31,0.69
+2011-02-23,sarkozy,Kantar,920,face to face,0.22,0.75
+2011-02-28,sarkozy,BVA,1045,phone,0.3,0.66
+2011-03-18,sarkozy,Ifop,928,phone,0.29,0.71
+2011-03-20,sarkozy,Kantar,1074,face to face,0.23,0.74
+2011-03-21,sarkozy,Ipsos,934,phone,0.31,0.68
+2011-03-25,sarkozy,BVA,926,phone,0.32,0.65
+2011-04-10,sarkozy,Ipsos,908,phone,0.29,0.68
+2011-04-17,sarkozy,Ifop,1027,phone,0.28,0.72
+2011-04-27,sarkozy,Kantar,1034,face to face,0.2,0.76
+2011-04-28,sarkozy,BVA,989,phone,0.31,0.66
+2011-05-15,sarkozy,Ifop,1009,phone,0.29,0.71
+2011-05-19,sarkozy,Ipsos,1055,phone,0.31,0.66
+2011-05-22,sarkozy,Kantar,1100,face to face,0.22,0.76
+2011-05-23,sarkozy,BVA,942,phone,0.35,0.62
+2011-06-13,sarkozy,Ipsos,980,phone,0.3,0.66
+2011-06-20,sarkozy,BVA,923,phone,0.37,0.62
+2011-06-20,sarkozy,Ifop,917,phone,0.3,0.7
+2011-06-21,sarkozy,Kantar,913,face to face,0.25,0.73
+2011-07-10,sarkozy,Ipsos,953,phone,0.35,0.61
+2011-07-20,sarkozy,Ifop,939,phone,0.36,0.64
+2011-08-17,sarkozy,Ifop,927,phone,0.33,0.67
+2011-08-17,sarkozy,Ipsos,1043,phone,0.35,0.61
+2011-08-22,sarkozy,Kantar,950,face to face,0.24,0.72
+2011-09-13,sarkozy,Ipsos,1017,phone,0.35,0.62
+2011-09-16,sarkozy,Ifop,1097,phone,0.32,0.67
+2011-09-20,sarkozy,BVA,1061,phone,0.32,0.65
+2011-09-23,sarkozy,Kantar,970,face to face,0.24,0.72
+2011-10-12,sarkozy,Ipsos,936,phone,0.35,0.61
+2011-10-15,sarkozy,Ifop,1044,phone,0.31,0.69
+2011-10-20,sarkozy,Kantar,1042,face to face,0.3,0.66
+2011-10-26,sarkozy,BVA,980,phone,0.32,0.66
+2011-11-18,sarkozy,Ifop,958,phone,0.34,0.66
+2011-11-20,sarkozy,BVA,1092,phone,0.38,0.61
+2011-11-20,sarkozy,Kantar,1065,face to face,0.29,0.68
+2011-11-24,sarkozy,Ipsos,958,phone,0.37,0.59
+2011-12-14,sarkozy,Ipsos,942,phone,0.36,0.61
+2011-12-20,sarkozy,Ifop,1026,phone,0.34,0.66
+2011-12-27,sarkozy,Kantar,1004,face to face,0.29,0.68
+2012-01-18,sarkozy,Ipsos,1080,phone,0.34,0.63
+2012-01-19,sarkozy,Ifop,934,phone,0.32,0.68
+2012-01-20,sarkozy,BVA,1056,phone,0.32,0.67
+2012-01-22,sarkozy,Kantar,1064,face to face,0.29,0.68
+2012-02-13,sarkozy,Ipsos,980,phone,0.36,0.6
+2012-02-16,sarkozy,BVA,955,phone,0.32,0.67
+2012-02-19,sarkozy,Ifop,1043,phone,0.33,0.67
+2012-02-25,sarkozy,Kantar,1024,face to face,0.26,0.72
+2012-03-15,sarkozy,Ifop,1087,phone,0.36,0.64
+2012-03-21,sarkozy,Kantar,998,face to face,0.33,0.63
+2012-03-22,sarkozy,BVA,912,phone,0.33,0.66
+2012-03-23,sarkozy,Ipsos,1093,phone,0.38,0.59
+2012-04-15,sarkozy,Ifop,989,phone,0.36,0.64
+2012-04-21,sarkozy,Kantar,1004,face to face,0.37,0.6
+2012-04-26,sarkozy,Ipsos,992,phone,0.4,0.58
+2012-05-11,hollande,Ipsos,1052,phone,0.53,0.27
+2012-05-20,hollande,Ifop,1026,phone,0.61,0.33
+2012-05-28,hollande,Kantar,912,face to face,0.55,0.37
+2012-05-30,hollande,BVA,1047,internet,0.61,0.37
+2012-06-12,hollande,Ipsos,952,phone,0.53,0.37
+2012-06-15,hollande,BVA,1035,internet,0.61,0.38
+2012-06-17,hollande,Ifop,905,phone,0.59,0.4
+2012-06-24,hollande,Kantar,903,face to face,0.55,0.39
+2012-07-11,hollande,Ipsos,997,phone,0.55,0.37
+2012-07-20,hollande,Ifop,1061,phone,0.56,0.44
+2012-08-15,hollande,Ifop,990,phone,0.54,0.45
+2012-08-21,hollande,Kantar,1075,face to face,0.5,0.45
+2012-08-22,hollande,Ipsos,1085,phone,0.44,0.47
+2012-09-10,hollande,Ipsos,989,phone,0.44,0.49
+2012-09-18,hollande,Ifop,1070,phone,0.43,0.56
+2012-09-23,hollande,BVA,1095,internet,0.46,0.53
+2012-09-23,hollande,Kantar,1009,face to face,0.41,0.56
+2012-10-15,hollande,Ifop,900,phone,0.42,0.57
+2012-10-21,hollande,Kantar,919,face to face,0.36,0.6
+2012-10-22,hollande,Ipsos,973,phone,0.42,0.51
+2012-10-25,hollande,BVA,918,internet,0.44,0.55
+2012-11-13,hollande,Ipsos,944,phone,0.41,0.53
+2012-11-17,hollande,BVA,1014,internet,0.44,0.55
+2012-11-18,hollande,Ifop,1061,phone,0.41,0.58
+2012-11-25,hollande,Kantar,1027,face to face,0.35,0.61
+2012-12-13,hollande,Ipsos,1036,phone,0.35,0.6
+2012-12-19,hollande,Ifop,909,phone,0.37,0.62
+2012-12-21,hollande,Kantar,1036,face to face,0.35,0.62
+2012-12-27,hollande,BVA,1096,internet,0.4,0.59
+2013-01-18,hollande,Ifop,927,phone,0.38,0.62
+2013-01-19,hollande,BVA,973,internet,0.44,0.55
+2013-01-24,hollande,Ipsos,1026,phone,0.36,0.58
+2013-01-28,hollande,Kantar,926,face to face,0.35,0.61
+2013-02-17,hollande,Ifop,1040,phone,0.37,0.62
+2013-02-18,hollande,Ipsos,997,phone,0.36,0.59
+2013-02-23,hollande,BVA,989,internet,0.43,0.56
+2013-02-27,hollande,Kantar,930,face to face,0.3,0.66
+2013-03-18,hollande,BVA,909,internet,0.35,0.64
+2013-03-19,hollande,Ifop,1012,phone,0.31,0.68
+2013-03-20,hollande,Kantar,1007,face to face,0.27,0.7
+2013-03-26,hollande,Ipsos,1086,phone,0.31,0.64
+2013-04-15,hollande,Ifop,988,phone,0.25,0.74
+2013-04-19,hollande,Ipsos,1057,phone,0.26,0.7
+2013-04-20,hollande,BVA,1024,internet,0.34,0.66
+2013-04-21,hollande,Kantar,935,face to face,0.24,0.73
+2013-05-15,hollande,Ifop,992,phone,0.29,0.71
+2013-05-22,hollande,Ipsos,957,phone,0.25,0.72
+2013-05-23,hollande,Kantar,996,face to face,0.29,0.68
+2013-05-25,hollande,BVA,1015,internet,0.35,0.64
+2013-06-11,hollande,Ipsos,1017,phone,0.26,0.7
+2013-06-15,hollande,Ifop,1043,phone,0.26,0.73
+2013-06-24,hollande,BVA,938,internet,0.31,0.68
+2013-06-24,hollande,Kantar,963,face to face,0.27,0.7
+2013-07-14,hollande,Ipsos,1001,phone,0.26,0.71
+2013-07-16,hollande,Ifop,1059,phone,0.27,0.72
+2013-08-19,hollande,Ifop,948,phone,0.28,0.71
+2013-08-25,hollande,Ipsos,1083,phone,0.28,0.67
+2013-08-26,hollande,Kantar,1068,face to face,0.27,0.7
+2013-09-17,hollande,BVA,970,internet,0.32,0.66
+2013-09-18,hollande,Ifop,954,phone,0.23,0.76
+2013-09-27,hollande,Ipsos,1096,phone,0.27,0.68
+2013-09-28,hollande,Kantar,1074,face to face,0.23,0.74
+2013-10-18,hollande,Ifop,952,phone,0.23,0.77
+2013-10-22,hollande,BVA,914,internet,0.26,0.73
+2013-10-23,hollande,Ipsos,993,phone,0.24,0.71
+2013-10-23,hollande,Kantar,1038,face to face,0.21,0.76
+2013-11-10,hollande,Ipsos,1070,phone,0.21,0.75
+2013-11-19,hollande,Ifop,949,phone,0.2,0.79
+2013-11-20,hollande,BVA,953,internet,0.29,0.69
+2013-11-26,hollande,Kantar,1076,face to face,0.21,0.76
+2013-12-12,hollande,Ipsos,1077,phone,0.23,0.74
+2013-12-17,hollande,Ifop,975,phone,0.22,0.78
+2013-12-20,hollande,BVA,1031,internet,0.33,0.66
+2013-12-25,hollande,Kantar,975,face to face,0.21,0.74
+2014-01-14,hollande,Ipsos,1081,phone,0.24,0.74
+2014-01-16,hollande,Ifop,1014,phone,0.22,0.77
+2014-01-26,hollande,Kantar,1096,face to face,0.19,0.78
+2014-01-30,hollande,BVA,986,internet,0.31,0.68
+2014-02-11,hollande,Ipsos,1066,phone,0.21,0.76
+2014-02-18,hollande,BVA,964,internet,0.27,0.72
+2014-02-18,hollande,Ifop,965,phone,0.2,0.79
+2014-02-20,hollande,Kantar,925,face to face,0.17,0.8
+2014-03-18,hollande,Ifop,1011,phone,0.23,0.76
+2014-03-22,hollande,Ipsos,1076,phone,0.22,0.74
+2014-03-27,hollande,BVA,1097,internet,0.28,0.71
+2014-03-28,hollande,Kantar,997,face to face,0.2,0.77
+2014-04-15,hollande,BVA,925,internet,0.21,0.78
+2014-04-19,hollande,Ifop,1097,phone,0.18,0.82
+2014-04-20,hollande,Ipsos,987,phone,0.18,0.76
+2014-04-20,hollande,Kantar,1048,face to face,0.18,0.78
+2014-05-16,hollande,BVA,996,internet,0.21,0.78
+2014-05-20,hollande,Ifop,917,phone,0.18,0.82
+2014-05-21,hollande,Kantar,1091,face to face,0.16,0.81
+2014-05-23,hollande,Ipsos,996,phone,0.19,0.78
+2014-06-14,hollande,Ipsos,1043,phone,0.19,0.78
+2014-06-16,hollande,Ifop,941,phone,0.18,0.81
+2014-06-17,hollande,BVA,947,internet,0.22,0.77
+2014-06-23,hollande,Kantar,1024,face to face,0.18,0.79
+2014-07-15,hollande,Ifop,952,phone,0.18,0.81
+2014-07-25,hollande,Ipsos,947,phone,0.2,0.75
+2014-08-17,hollande,BVA,1075,internet,0.19,0.8
+2014-08-17,hollande,Ipsos,1048,phone,0.17,0.79
+2014-08-19,hollande,Ifop,975,phone,0.17,0.81
+2014-08-20,hollande,Kantar,1027,face to face,0.13,0.85
+2014-09-12,hollande,Ipsos,1056,phone,0.13,0.83
+2014-09-18,hollande,BVA,967,internet,0.23,0.76
+2014-09-18,hollande,Ifop,972,phone,0.13,0.86
+2014-09-22,hollande,Kantar,1079,face to face,0.14,0.84
+2014-10-17,hollande,Odoxa,972,internet,0.2,0.8
+2014-10-18,hollande,Ipsos,1078,phone,0.16,0.81
+2014-10-20,hollande,Ifop,1077,phone,0.14,0.84
+2014-10-24,hollande,BVA,1096,internet,0.2,0.79
+2014-10-28,hollande,Kantar,1016,face to face,0.13,0.85
+2014-11-14,hollande,Ipsos,1021,phone,0.15,0.81
+2014-11-15,hollande,Ifop,1048,phone,0.13,0.85
+2014-11-20,hollande,BVA,941,internet,0.2,0.79
+2014-11-21,hollande,Odoxa,988,internet,0.16,0.83
+2014-11-22,hollande,Kantar,983,face to face,0.15,0.83
+2014-12-12,hollande,Odoxa,1030,internet,0.21,0.78
+2014-12-19,hollande,Ifop,1089,phone,0.17,0.82
+2014-12-24,hollande,Ipsos,959,phone,0.18,0.78
+2014-12-24,hollande,Kantar,1037,face to face,0.2,0.77
+2014-12-27,hollande,BVA,1017,internet,0.24,0.76
+2015-01-16,hollande,Ipsos,913,phone,0.38,0.57
+2015-01-17,hollande,Ifop,1039,phone,0.29,0.7
+2015-01-23,hollande,Odoxa,1033,internet,0.31,0.68
+2015-01-27,hollande,Kantar,1035,face to face,0.23,0.75
+2015-01-28,hollande,BVA,1080,internet,0.34,0.65
+2015-02-18,hollande,Ifop,945,phone,0.24,0.76
+2015-02-20,hollande,Odoxa,975,internet,0.26,0.73
+2015-02-25,hollande,Kantar,1025,face to face,0.22,0.75
+2015-02-26,hollande,BVA,1011,internet,0.3,0.69
+2015-02-27,hollande,Ipsos,988,phone,0.3,0.67
+2015-03-18,hollande,Ifop,930,phone,0.25,0.75
+2015-03-20,hollande,Odoxa,904,internet,0.24,0.75
+2015-03-22,hollande,BVA,1016,internet,0.27,0.72
+2015-03-24,hollande,Kantar,995,face to face,0.18,0.77
+2015-03-27,hollande,Ipsos,980,phone,0.26,0.69
+2015-04-14,hollande,Ipsos,926,phone,0.23,0.73
+2015-04-16,hollande,Ifop,968,phone,0.21,0.78
+2015-04-17,hollande,Odoxa,903,internet,0.21,0.78
+2015-04-18,hollande,BVA,1042,internet,0.26,0.74
+2015-04-27,hollande,Kantar,1045,face to face,0.16,0.82
+2015-05-15,hollande,BVA,993,internet,0.27,0.72
+2015-05-15,hollande,Ifop,908,phone,0.21,0.78
+2015-05-22,hollande,Odoxa,979,internet,0.23,0.76
+2015-05-25,hollande,Kantar,929,face to face,0.19,0.78
+2015-05-26,hollande,Ipsos,1055,phone,0.24,0.74
+2015-06-14,hollande,Ipsos,937,phone,0.2,0.77
+2015-06-17,hollande,BVA,921,internet,0.26,0.73
+2015-06-20,hollande,Ifop,1061,phone,0.22,0.77
+2015-06-24,hollande,Kantar,1000,face to face,0.19,0.78
+2015-06-26,hollande,Odoxa,979,internet,0.22,0.76
+2015-07-11,hollande,Ipsos,931,phone,0.26,0.71
+2015-07-15,hollande,BVA,1007,internet,0.28,0.71
+2015-07-18,hollande,Ifop,1083,phone,0.22,0.77
+2015-07-30,hollande,BVA,1073,internet,0.23,0.76
+2015-08-16,hollande,Ifop,986,phone,0.24,0.75
+2015-08-20,hollande,Kantar,968,face to face,0.18,0.8
+2015-09-10,hollande,Ipsos,966,phone,0.24,0.72
+2015-09-16,hollande,Ifop,919,phone,0.23,0.77
+2015-09-25,hollande,Odoxa,1027,internet,0.21,0.77
+2015-09-27,hollande,BVA,926,internet,0.23,0.76
+2015-09-28,hollande,Kantar,944,face to face,0.16,0.82
+2015-10-12,hollande,Ipsos,1068,phone,0.24,0.72
+2015-10-16,hollande,Odoxa,968,internet,0.22,0.77
+2015-10-18,hollande,Ifop,1049,phone,0.2,0.79
+2015-10-23,hollande,Kantar,992,face to face,0.15,0.82
+2015-10-26,hollande,BVA,1096,internet,0.25,0.75
+2015-11-15,hollande,Ifop,908,phone,0.27,0.73
+2015-11-20,hollande,Odoxa,1012,internet,0.32,0.67
+2015-11-22,hollande,Ipsos,911,phone,0.41,0.55
+2015-11-24,hollande,BVA,1048,internet,0.33,0.65
+2015-11-24,hollande,Kantar,1032,face to face,0.35,0.63
+2015-12-17,hollande,Ifop,1006,phone,0.27,0.73
+2015-12-18,hollande,Odoxa,1063,internet,0.27,0.71
+2015-12-22,hollande,BVA,1088,internet,0.3,0.69
+2015-12-26,hollande,Kantar,1029,face to face,0.23,0.74
+2016-01-16,hollande,Ifop,922,phone,0.24,0.75
+2016-01-19,hollande,BVA,1012,internet,0.25,0.74
+2016-01-19,hollande,Ipsos,961,phone,0.29,0.66
+2016-01-20,hollande,Kantar,930,face to face,0.15,0.82
+2016-01-22,hollande,Odoxa,1028,internet,0.22,0.78
+2016-02-10,hollande,Ipsos,973,phone,0.2,0.75
+2016-02-16,hollande,Ifop,935,phone,0.19,0.81
+2016-02-18,hollande,BVA,905,internet,0.22,0.77
+2016-02-19,hollande,Odoxa,985,internet,0.2,0.8
+2016-02-21,hollande,Kantar,917,face to face,0.16,0.82
+2016-03-19,hollande,Ifop,1040,phone,0.17,0.82
+2016-03-20,hollande,Ipsos,1040,phone,0.15,0.8
+2016-03-20,hollande,Kantar,968,face to face,0.15,0.83
+2016-03-21,hollande,BVA,1071,internet,0.21,0.79
+2016-03-25,hollande,Odoxa,1020,internet,0.18,0.81
+2016-04-10,hollande,Ipsos,933,phone,0.16,0.8
+2016-04-17,hollande,Ifop,988,phone,0.14,0.85
+2016-04-21,hollande,BVA,1027,internet,0.19,0.8
+2016-04-22,hollande,Odoxa,1020,internet,0.17,0.83
+2016-04-27,hollande,Kantar,1099,face to face,0.13,0.84
+2016-05-14,hollande,Ipsos,935,phone,0.18,0.79
+2016-05-20,hollande,Ifop,977,phone,0.15,0.84
+2016-05-20,hollande,Odoxa,944,internet,0.16,0.83
+2016-05-22,hollande,BVA,906,internet,0.19,0.8
+2016-05-25,hollande,Kantar,1095,face to face,0.13,0.84
+2016-06-14,hollande,Ipsos,916,phone,0.16,0.8
+2016-06-17,hollande,Odoxa,961,internet,0.16,0.84
+2016-06-19,hollande,Ifop,1063,phone,0.14,0.85
+2016-06-25,hollande,BVA,1075,internet,0.18,0.81
+2016-06-27,hollande,Kantar,1052,face to face,0.12,0.86
+2016-07-15,hollande,Ifop,1001,phone,0.17,0.82
+2016-07-23,hollande,BVA,1095,internet,0.19,0.79
+2016-08-14,hollande,Ipsos,931,phone,0.18,0.75
+2016-08-15,hollande,Ifop,995,phone,0.16,0.82
+2016-08-23,hollande,Kantar,986,face to face,0.17,0.8
+2016-09-10,hollande,Ipsos,1051,phone,0.15,0.8
+2016-09-16,hollande,Ifop,929,phone,0.15,0.84
+2016-09-16,hollande,Odoxa,1055,internet,0.16,0.84
+2016-09-17,hollande,BVA,1054,internet,0.18,0.8
+2016-09-22,hollande,Kantar,1056,face to face,0.13,0.84
+2016-10-14,hollande,Odoxa,995,internet,0.16,0.84
+2016-10-18,hollande,Ipsos,1065,phone,0.18,0.79
+2016-10-20,hollande,Ifop,1058,phone,0.14,0.85
+2016-10-23,hollande,Kantar,1071,face to face,0.11,0.87
+2016-10-29,hollande,BVA,966,internet,0.15,0.83
+2016-11-14,hollande,Ipsos,1003,phone,0.18,0.8
+2016-11-17,hollande,Ifop,1045,phone,0.15,0.84
+2016-11-19,hollande,BVA,989,internet,0.18,0.81
+2016-11-26,hollande,Kantar,958,face to face,0.13,0.85
+2016-11-29,hollande,Odoxa,972,internet,0.17,0.83
+2016-12-11,hollande,Ipsos,1058,phone,0.21,0.76
+2016-12-15,hollande,Odoxa,1009,internet,0.18,0.82
+2016-12-19,hollande,Ifop,927,phone,0.19,0.81
+2016-12-20,hollande,Kantar,935,face to face,0.19,0.78
+2017-01-13,hollande,Odoxa,982,internet,0.2,0.8
+2017-01-17,hollande,Ifop,975,phone,0.2,0.8
+2017-01-23,hollande,Kantar,1097,face to face,0.18,0.8
+2017-01-24,hollande,BVA,995,internet,0.24,0.76
+2017-01-24,hollande,Ipsos,921,phone,0.22,0.73
+2017-02-09,hollande,Odoxa,1079,internet,0.21,0.79
+2017-02-13,hollande,Ipsos,980,phone,0.2,0.75
+2017-02-17,hollande,BVA,1084,internet,0.22,0.77
+2017-02-19,hollande,Ifop,915,phone,0.19,0.81
+2017-02-22,hollande,Kantar,983,face to face,0.16,0.82
+2017-03-15,hollande,BVA,1057,internet,0.24,0.74
+2017-03-15,hollande,Ifop,1036,phone,0.22,0.77
+2017-03-20,hollande,Ipsos,1042,phone,0.25,0.71
+2017-03-23,hollande,Kantar,964,face to face,0.21,0.76
+2017-03-23,hollande,Odoxa,933,internet,0.21,0.79
+2017-04-15,hollande,Ifop,921,phone,0.22,0.77
+2017-04-20,hollande,Ipsos,918,phone,0.23,0.73
+2017-04-20,hollande,Odoxa,1016,internet,0.22,0.78
+2017-04-27,hollande,Kantar,934,face to face,0.14,0.83
+2017-04-30,hollande,BVA,985,internet,0.25,0.75
+2017-05-17,macron,Elabe,999,internet,0.45,0.46
+2017-05-20,macron,Ifop,973,phone,0.62,0.31
+2017-05-20,macron,Ipsos,1015,internet,0.46,0.27
+2017-05-21,macron,Viavoice,1006,internet,0.49,0.3
+2017-05-23,macron,BVA,1011,internet,0.62,0.35
+2017-05-23,macron,Odoxa,1014,internet,0.58,0.41
+2017-05-24,macron,Elabe,1051,internet,0.67,0.31
+2017-05-25,macron,YouGov,1008,internet,0.39,0.32
+2017-05-27,macron,Ipsos,2138,internet,0.58,0.42
+2017-05-27,macron,Kantar,1008,face to face,0.57,0.38
+2017-06-04,macron,BVA,4772,internet,0.68,0.31
+2017-06-06,macron,Elabe,1001,internet,0.45,0.45
+2017-06-07,macron,Elabe,1000,internet,0.66,0.33
+2017-06-09,macron,Ipsos,4003,internet,0.58,0.42
+2017-06-19,macron,Ifop,1883,phone&internet,0.64,0.35
+2017-06-20,macron,BVA,1187,internet,0.59,0.39
+2017-06-22,macron,Odoxa,1008,internet,0.58,0.41
+2017-06-24,macron,Ipsos,1058,internet,0.45,0.27
+2017-06-24,macron,Kantar,1000,face to face,0.54,0.39
+2017-06-25,macron,Viavoice,1011,internet,0.53,0.27
+2017-06-29,macron,YouGov,1016,internet,0.43,0.36
+2017-07-05,macron,Elabe,999,internet,0.45,0.46
+2017-07-18,macron,BVA,1007,internet,0.54,0.44
+2017-07-20,macron,Ifop,1947,phone&internet,0.54,0.43
+2017-07-22,macron,Ipsos,1022,internet,0.42,0.42
+2017-07-27,macron,YouGov,1003,internet,0.36,0.49
+2017-08-02,macron,Elabe,1000,internet,0.4,0.55
+2017-08-08,macron,Ifop,1001,internet,0.36,0.64
+2017-08-26,macron,Ifop,1023,phone&internet,0.4,0.57
+2017-08-26,macron,Kantar,983,face to face,0.41,0.52
+2017-08-29,macron,BVA,1162,internet,0.43,0.55
+2017-08-29,macron,Yougov,1003,internet,0.3,0.54
+2017-09-06,macron,Elabe,1002,internet,0.37,0.58
+2017-09-09,macron,Ipsos,988,internet,0.32,0.54
+2017-09-13,macron,Viavoice,1007,internet,0.38,0.47
+2017-09-14,macron,Odoxa,992,internet,0.44,0.56
+2017-09-19,macron,Ifop,1989,phone&internet,0.45,0.53
+2017-09-26,macron,BVA,1092,internet,0.45,0.51
+2017-09-28,macron,Yougov,1002,internet,0.32,0.56
+2017-09-30,macron,Kantar,1000,face to face,0.39,0.56
+2017-10-04,macron,Elabe,1001,internet,0.4,0.54
+2017-10-14,macron,Ipsos,957,internet,0.34,0.54
+2017-10-17,macron,Ifop,1938,phone&internet,0.42,0.56
+2017-10-19,macron,Odoxa,995,internet,0.44,0.56
+2017-10-25,macron,BVA,1193,internet,0.42,0.56
+2017-10-26,macron,Yougov,1034,internet,0.32,0.55
+2017-10-27,macron,Kantar,983,face to face,0.38,0.57
+2017-10-31,macron,Elabe,1152,internet,0.38,0.56
+2017-11-01,macron,Viavoice,1002,internet,0.4,0.46
+2017-11-11,macron,Ipsos,1043,internet,0.37,0.53
+2017-11-14,macron,Ifop,1964,phone&internet,0.46,0.52
+2017-11-23,macron,Odoxa,1009,internet,0.45,0.55
+2017-11-25,macron,Kantar,1000,face to face,0.42,0.54
+2017-11-28,macron,BVA,972,internet,0.46,0.51
+2017-11-29,macron,Elabe,1001,internet,0.4,0.54
+2017-11-30,macron,Yougov,1006,internet,0.35,0.5
+2017-12-09,macron,Ipsos,1016,internet,0.39,0.5
+2017-12-12,macron,Ifop,1942,phone&internet,0.52,0.46
+2017-12-14,macron,Odoxa,1028,internet,0.54,0.46
+2017-12-19,macron,BVA,1199,internet,0.52,0.45
+2018-01-03,macron,Elabe,1001,internet,0.42,0.5
+2018-01-06,macron,Kantar,1000,face to face,0.44,0.51
+2018-01-13,macron,Ipsos,1050,internet,0.4,0.49
+2018-01-16,macron,Ifop,1947,phone&internet,0.5,0.49
+2018-01-18,macron,Odoxa,1006,internet,0.49,0.5
+2018-01-25,macron,Yougov,1008,internet,0.41,0.45
+2018-01-27,macron,Kantar,1000,face to face,0.44,0.51
+2018-01-30,macron,BVA,1101,internet,0.47,0.48
+2018-01-31,macron,Elabe,1000,internet,0.38,0.56
+2018-02-10,macron,Ipsos,1001,internet,0.35,0.55
+2018-02-13,macron,Ifop,1953,phone&internet,0.44,0.55
+2018-02-22,macron,Odoxa,973,internet,0.43,0.57
+2018-02-22,macron,Yougov,1026,internet,0.3,0.58
+2018-02-23,macron,Viavoice,1010,internet,0.41,0.45
+2018-02-24,macron,Kantar,1000,face to face,0.43,0.53
+2018-02-27,macron,BVA,1019,internet,0.43,0.53
+2018-02-28,macron,Elabe,999,internet,0.41,0.52
+2018-03-13,macron,Ifop,1946,phone&internet,0.42,0.57
+2018-03-17,macron,Ipsos,1011,internet,0.37,0.55
+2018-03-22,macron,BVA,1053,internet,0.4,0.57
+2018-03-23,macron,Odoxa,1018,internet,0.45,0.54
+2018-03-28,macron,Yougov,1004,internet,0.32,0.56
+2018-03-30,macron,Kantar,1000,face to face,0.4,0.56
+2018-04-04,macron,Elabe,1008,internet,0.39,0.55
+2018-04-13,macron,Elabe,1004,internet,0.2,0.44
+2018-04-14,macron,Ifop,1201,internet,0.42,0.58
+2018-04-17,macron,Ifop,1949,phone&internet,0.44,0.55
+2018-04-17,macron,Viavoice,1000,internet,0.41,0.46
+2018-04-18,macron,Elabe,1002,internet,0.2,0.46
+2018-04-19,macron,BVA,1011,internet,0.43,0.54
+2018-04-19,macron,Odoxa,1017,internet,0.47,0.53
+2018-04-21,macron,Ipsos,1013,internet,0.4,0.52
+2018-04-25,macron,Kantar,1000,face to face,0.41,0.56
+2018-04-26,macron,Yougov,1013,internet,0.33,0.54
+2018-05-01,macron,Elabe,1008,internet,0.41,0.53
+2018-05-16,macron,Odoxa,1015,internet,0.46,0.54
+2018-05-19,macron,Ipsos,1025,internet,0.37,0.58
+2018-05-24,macron,BVA,1000,internet,0.4,0.56
+2018-05-26,macron,Kantar,1000,face to face,0.38,0.57
+2018-06-06,macron,Elabe,1002,internet,0.4,0.55
+2018-06-19,macron,Ifop,1963,phone&internet,0.4,0.58
+2018-06-21,macron,BVA,1000,internet,0.41,0.53
+2018-06-22,macron,Odoxa,1007,internet,0.41,0.59
+2018-06-23,macron,Ipsos,996,internet,0.36,0.59
+2018-06-28,macron,Ifop,1008,internet,0.41,0.59
+2018-06-28,macron,Yougov,1028,internet,0.32,0.59
+2018-06-30,macron,Kantar,923,face to face,0.32,0.64
+2018-07-04,macron,Elabe,1001,internet,0.34,0.6
+2018-07-16,macron,Odoxa,1005,internet,0.39,0.61
+2018-07-19,macron,BVA,1003,internet,0.39,0.59
+2018-07-21,macron,Ipsos,999,internet,0.32,0.6
+2018-07-23,macron,Ifop,1981,internet,0.39,0.61
+2018-07-25,macron,Harris,966,internet,0.42,0.58
+2018-07-26,macron,Yougov,1017,internet,0.27,0.62
+2018-08-01,macron,Elabe,1007,internet,0.36,0.6
+2018-08-21,macron,Viavoice,1008,internet,0.36,0.51
+2018-08-24,macron,Ifop,995,internet,0.34,0.66
+2018-08-25,macron,Kantar,1000,face to face,0.33,0.64
+2018-08-29,macron,Harris,977,internet,0.36,0.64
+2018-08-30,macron,BVA,1040,internet,0.34,0.66
+2018-08-30,macron,Yougov,1099,internet,0.23,0.69
+2018-08-31,macron,Ifop,1015,internet,0.31,0.69
+2018-09-05,macron,Elabe,1000,internet,0.31,0.64
+2018-09-06,macron,Odoxa,1004,internet,0.29,0.71
+2018-09-08,macron,Ipsos,998,internet,0.25,0.69
+2018-09-18,macron,Ifop,1964,phone&internet,0.29,0.7
+2018-09-20,macron,OpinionWay,1061,internet,0.28,0.7
+2018-09-26,macron,Harris,1022,internet,0.34,0.66
+2018-09-27,macron,BVA,1011,internet,0.32,0.67
+2018-09-27,macron,Yougov,1006,internet,0.25,0.67
+2018-09-28,macron,Ifop,1008,internet,0.33,0.67
+2018-09-29,macron,Kantar,1000,face to face,0.3,0.67
+2018-10-03,macron,Elabe,1001,internet,0.3,0.66
+2018-10-05,macron,Odoxa,1014,internet,0.33,0.66
+2018-10-17,macron,Ifop,1968,phone&internet,0.29,0.7
+2018-10-18,macron,OpinionWay,1063,internet,0.29,0.68
+2018-10-20,macron,Ipsos,1003,internet,0.26,0.7
+2018-10-21,macron,Viavoice,1007,internet,0.26,0.65
+2018-10-24,macron,Harris,989,internet,0.33,0.67
+2018-10-25,macron,BVA,1090,internet,0.29,0.7
+2018-10-25,macron,Yougov,1010,internet,0.21,0.69
+2018-10-26,macron,Ifop,1024,internet,0.29,0.71
+2018-10-26,macron,Kantar,1000,face to face,0.26,0.71
+2018-11-07,macron,Elabe,1002,internet,0.27,0.69
+2018-11-13,macron,Ifop,1957,phone&internet,0.25,0.73
+2018-11-15,macron,OpinionWay,1064,internet,0.29,0.69
+2018-11-16,macron,Odoxa,1005,internet,0.32,0.68
+2018-11-17,macron,Ipsos,1000,internet,0.26,0.7
+2018-11-22,macron,BVA,1258,internet,0.26,0.73
+2018-11-28,macron,Harris,908,internet,0.32,0.68
+2018-11-29,macron,Viavoice,1021,internet,0.23,0.69
+2018-11-29,macron,Yougov,1006,internet,0.18,0.76
+2018-11-30,macron,Ifop,1004,internet,0.23,0.76
+2018-12-01,macron,Kantar,1000,face to face,0.21,0.77
+2018-12-05,macron,Elabe,1002,internet,0.23,0.74
+2018-12-08,macron,Ipsos,971,internet,0.2,0.76
+2018-12-11,macron,Ifop,1943,phone&internet,0.23,0.76
+2018-12-13,macron,OpinionWay,1029,internet,0.31,0.67
+2018-12-14,macron,Odoxa,990,internet,0.27,0.73
+2018-12-19,macron,BVA,1105,internet,0.27,0.72
+2018-12-24,macron,Harris,1028,internet,0.31,0.69
+2019-01-04,macron,Ifop,1004,internet,0.28,0.72
+2019-01-05,macron,Kantar,1000,face to face,0.22,0.75
+2019-01-09,macron,Elabe,1003,internet,0.25,0.71
+2019-01-12,macron,Ipsos,1005,internet,0.23,0.74
+2019-01-15,macron,Ifop,1928,phone&internet,0.27,0.72
+2019-01-18,macron,OpinionWay,1042,internet,0.3,0.68
+2019-01-23,macron,Harris,1039,internet,0.35,0.65
+2019-01-23,macron,Odoxa,1003,internet,0.3,0.69
+2019-01-24,macron,BVA,1023,internet,0.31,0.69
+2019-01-26,macron,Kantar,1000,face to face,0.24,0.73
+2019-01-31,macron,Yougov,1037,internet,0.21,0.73
+2019-02-01,macron,Ifop,1004,internet,0.34,0.66
+2019-02-06,macron,Elabe,1000,internet,0.27,0.69
+2019-02-12,macron,Ifop,1891,phone&internet,0.28,0.71
+2019-02-14,macron,OpinionWay,1027,internet,0.29,0.69
+2019-02-20,macron,Viavoice,1004,internet,0.28,0.61
+2019-02-21,macron,BVA,1012,internet,0.3,0.69
+2019-02-21,macron,Harris,897,internet,0.39,0.61
+2019-02-21,macron,Odoxa,1004,internet,0.32,0.68
+2019-02-23,macron,Kantar,1000,face to face,0.26,0.71
+2019-02-28,macron,Yougov,1004,internet,0.24,0.7
+2019-03-01,macron,Ifop,1009,internet,0.31,0.69
+2019-03-02,macron,Ipsos,1035,internet,0.28,0.67
+2019-03-06,macron,Elabe,1003,internet,0.31,0.66
+2019-03-14,macron,OpinionWay,1070,internet,0.32,0.66
+2019-03-19,macron,Ifop,1929,phone&internet,0.29,0.69
+2019-03-21,macron,BVA,1001,internet,0.29,0.7
+2019-03-21,macron,Odoxa,1001,internet,0.3,0.7
+2019-03-21,macron,OpinionWay,1009,internet,0.29,0.69
+2019-03-27,macron,Harris,933,internet,0.38,0.62
+2019-03-28,macron,OpinionWay,1051,internet,0.29,0.7
+2019-03-28,macron,Yougov,1001,internet,0.25,0.68
+2019-03-29,macron,Ifop,1001,internet,0.29,0.71
+2019-03-30,macron,Kantar,1000,face to face,0.26,0.71
+2019-04-03,macron,Elabe,1004,internet,0.28,0.69
+2019-04-06,macron,Ipsos,1001,internet,0.27,0.69
+2019-04-16,macron,Ifop,1921,phone&internet,0.29,0.69
+2019-04-18,macron,BVA,1002,internet,0.32,0.67
+2019-04-18,macron,Odoxa,1003,internet,0.32,0.67
+2019-04-18,macron,OpinionWay,1057,internet,0.27,0.7
+2019-04-24,macron,Harris,934,internet,0.38,0.62
+2019-04-26,macron,Kantar,1000,face to face,0.25,0.72
+2019-04-28,macron,Viavoice,1002,internet,0.26,0.65
+2019-05-03,macron,Ifop,1008,internet,0.3,0.7
+2019-05-07,macron,Elabe,1583,internet,0.27,0.67
+2019-05-11,macron,Ipsos,1001,internet,0.27,0.68
+2019-05-14,macron,Ifop,1946,phone&internet,0.3,0.67
+2019-05-16,macron,BVA,1000,internet,0.32,0.68
+2019-05-27,macron,Odoxa,980,internet,0.3,0.7
+2019-05-29,macron,Harris,922,internet,0.4,0.6
+2019-05-29,macron,Ifop,1005,internet,0.32,0.68
+2019-05-30,macron,Kantar,1000,face to face,0.29,0.68
+2019-06-05,macron,Elabe,1007,internet,0.32,0.63
+2019-06-06,macron,OpinionWay,1014,internet,0.33,0.65
+2019-06-15,macron,Ipsos,1002,internet,0.32,0.64
+2019-06-18,macron,Ifop,1910,phone&internet,0.3,0.67
+2019-06-20,macron,BVA,1003,internet,0.35,0.65
+2019-06-20,macron,Odoxa,1002,internet,0.36,0.64
+2019-06-26,macron,Harris,894,internet,0.4,0.6
+2019-06-27,macron,Ifop,1002,internet,0.38,0.62
+2019-06-29,macron,Kantar,1000,face to face,0.27,0.69
+2019-07-02,macron,Viavoice,1002,internet,0.32,0.57
+2019-07-02,macron,Yougov,1045,internet,0.26,0.66
+2019-07-03,macron,Elabe,1009,internet,0.31,0.64
+2019-07-04,macron,OpinionWay,1002,internet,0.33,0.65
+2019-07-18,macron,BVA,1000,internet,0.34,0.66
+2019-07-18,macron,Ifop,996,internet,0.32,0.68
+2019-07-20,macron,Ipsos,1002,internet,0.31,0.64
+2019-07-24,macron,Harris,930,internet,0.41,0.59
+2019-07-31,macron,Elabe,1002,internet,0.28,0.67
+2019-08-22,macron,BVA,966,internet,0.34,0.66
+2019-08-22,macron,Ifop,988,internet,0.34,0.66
+2019-08-28,macron,Harris,910,internet,0.43,0.57
+2019-08-30,macron,Ifop,1010,internet,0.38,0.62
+2019-08-31,macron,Kantar,1000,face to face,0.32,0.66
+2019-09-04,macron,Elabe,1002,internet,0.33,0.61
+2019-09-11,macron,Viavoice,1008,internet,0.32,0.54
+2019-09-14,macron,Ipsos,1009,internet,0.36,0.59
+2019-09-17,macron,Ifop,1960,phone&internet,0.33,0.64
+2019-09-19,macron,BVA,1004,internet,0.37,0.63
+2019-09-19,macron,Odoxa,1005,internet,0.36,0.63
+2019-09-25,macron,Harris,905,internet,0.42,0.58
+2019-09-28,macron,Kantar,1000,face to face,0.29,0.67
+2019-10-02,macron,Elabe,1000,internet,0.33,0.6
+2019-10-12,macron,Ipsos,1008,internet,0.33,0.62
+2019-10-15,macron,Ifop,1953,phone&internet,0.34,0.64
+2019-10-17,macron,BVA,1000,internet,0.37,0.62
+2019-10-23,macron,Harris,905,internet,0.4,0.6
+2019-10-24,macron,Odoxa,1005,internet,0.35,0.65
+2019-10-25,macron,Kantar,1000,face to face,0.3,0.67
+2019-10-29,macron,Yougov,1031,internet,0.27,0.65
+2019-11-06,macron,Elabe,1002,internet,0.28,0.65
+2019-11-12,macron,Ifop,1911,phone&internet,0.33,0.65
+2019-11-14,macron,BVA,968,internet,0.36,0.64
+2019-11-16,macron,Ipsos,1053,internet,0.33,0.63
+2019-11-17,macron,Viavoice,1003,internet,0.31,0.57
+2019-11-21,macron,Odoxa,1002,internet,0.34,0.65
+2019-11-27,macron,Harris,900,internet,0.39,0.61
+2019-11-28,macron,Kantar,1000,face to face,0.27,0.7
+2019-12-10,macron,Ifop,1899,phone&internet,0.34,0.65
+2019-12-12,macron,BVA,968,internet,0.34,0.66
+2019-12-13,macron,Elabe,1003,internet,0.3,0.65
+2019-12-14,macron,Ipsos,1001,internet,0.29,0.67
+2019-12-19,macron,Odoxa,1002,internet,0.33,0.67
+2019-12-26,macron,Harris,915,internet,0.4,0.6
+2020-01-15,macron,Elabe,1006,internet,0.32,0.63
+2020-01-18,macron,Ipsos,1004,internet,0.3,0.64
+2020-01-21,macron,Ifop,1952,phone&internet,0.3,0.68
+2020-01-22,macron,Harris,934,internet,0.4,0.6
+2020-01-23,macron,BVA,1005,internet,0.33,0.66
+2020-01-23,macron,Odoxa,1002,internet,0.36,0.64
+2020-01-30,macron,Ifop,1000,internet,0.34,0.66
+2020-02-01,macron,Kantar,1000,face to face,0.24,0.72
+2020-02-05,macron,Elabe,1005,internet,0.31,0.63
+2020-02-18,macron,Ifop,1947,phone&internet,0.32,0.66
+2020-02-19,macron,Harris,909,internet,0.38,0.62
+2020-02-20,macron,BVA,1000,internet,0.33,0.67
+2020-02-20,macron,Odoxa,1005,internet,0.33,0.66
+2020-02-22,macron,Ipsos,1005,internet,0.3,0.63
+2020-02-23,macron,Viavoice,1000,internet,0.28,0.59
+2020-02-29,macron,Kantar,1000,face to face,0.28,0.69
+2020-03-04,macron,Elabe,1007,internet,0.29,0.66
+2020-03-18,macron,Harris,917,internet,0.51,0.49
+2020-03-21,macron,Ipsos,1000,internet,0.44,0.51
+2020-03-21,macron,Viavoice,1000,internet,0.34,0.51
+2020-03-23,macron,Ifop,1930,phone&internet,0.43,0.56
+2020-03-25,macron,Odoxa,1005,internet,0.38,0.62
+2020-03-26,macron,BVA,1010,internet,0.4,0.59
+2020-03-28,macron,Kantar,1000,internet,0.47,0.47
+2020-03-31,macron,Elabe,1003,internet,0.39,0.57
+2020-04-13,macron,Ifop,1942,phone&internet,0.42,0.57
+2020-04-23,macron,BVA,976,internet,0.38,0.61
+2020-04-23,macron,Odoxa,1005,internet,0.42,0.58
+2020-04-24,macron,Ipsos,1002,internet,0.38,0.58
+2020-04-29,macron,Harris,947,internet,0.43,0.57
+2020-05-05,macron,Elabe,1009,internet,0.34,0.61
+2020-05-19,macron,BVA,980,internet,0.37,0.62
+2020-05-19,macron,Ifop,1918,phone&internet,0.39,0.6
+2020-05-20,macron,Odoxa,1004,internet,0.35,0.65
+2020-05-27,macron,Harris,961,internet,0.44,0.56
+2020-05-30,macron,Ipsos,1013,internet,0.38,0.59
+2020-05-31,macron,Viavoice,1000,internet,0.33,0.53
+2020-06-02,macron,Elabe,1002,internet,0.33,0.62
+2020-06-16,macron,Ifop,1865,phone&internet,0.38,0.6
+2020-06-18,macron,BVA,1003,internet,0.38,0.62
+2020-06-18,macron,Odoxa,1004,internet,0.39,0.61
+2020-06-24,macron,Harris,975,internet,0.44,0.56
+2020-06-27,macron,Kantar,1000,face to face,0.33,0.64
+2020-06-30,macron,Yougov,1024,internet,0.29,0.64
+2020-07-01,macron,Elabe,1004,internet,0.35,0.65
+2020-07-10,macron,Ifop,1018,internet,0.38,0.62
+2020-07-16,macron,BVA,1000,internet,0.39,0.61
+2020-07-16,macron,Ifop,974,internet,0.37,0.63
+2020-07-22,macron,Harris,960,internet,0.5,0.5
+2020-08-05,macron,Elabe,1002,internet,0.39,0.56
+2020-08-28,macron,Ifop,1016,internet,0.39,0.61
+2020-08-29,macron,Kantar,1000,face to face,0.35,0.61
+2020-09-09,macron,Elabe,1001,internet,0.35,0.57
+2020-09-26,macron,Kantar,1000,face to face,0.29,0.68
+2020-10-07,macron,Elabe,1000,internet,0.32,0.63
+2020-10-10,macron,Ipsos,1000,internet,0.4,0.54
+2020-10-30,macron,Kantar,1000,face to face,0.4,0.55
+2020-11-04,macron,Elabe,1003,internet,0.35,0.61
+2020-11-14,macron,Ipsos,1000,internet,0.37,0.58
+2020-11-16,macron,Ifop,1924,phone&internet,0.41,0.57
+2020-11-27,macron,Ifop,1013,internet,0.41,0.59
+2020-11-28,macron,Kantar,1000,face to face,0.38,0.58
+2020-12-02,macron,Elabe,1000,internet,0.32,0.64
+2021-01-06,macron,Elabe,1001,internet,0.35,0.61
+2021-01-08,macron,Ifop,1028,internet,0.45,0.55
