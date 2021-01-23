@@ -116,9 +116,7 @@ binder-links.rtf
 /papers/*.pdf
 
 # NetCDF files
-district-level/*.nc
-district-level/oos_data/*.nc
-popularity/*.nc
+*.nc
 
 # PyMCon Presentation material
 /pymcon-presentation
