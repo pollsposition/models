@@ -183,7 +183,7 @@ for date in newterm_dates:
     
 ```
 
-There is an abnormally high variance for Chirac's second term. As a matter of fact, the previous scatterplot of $p_{approve}$ clearly shows almost two different curves. Let's look at the data directly:
+There is an abnormally high variance for Chirac's second term, and for the beggining of Macron's term. As a matter of fact, the previous scatterplot of $p_{approve}$ clearly shows almost two different curves. Let's look at the data for Chirac's term directly:
 
 ```python
 chirac = data[data["president"] == "chirac2"]
@@ -191,7 +191,15 @@ chirac2007 = chirac[chirac["year"] >= 2006]
 chirac2007
 ```
 
-It seems that difference stems from the polling method; face-to-face approval rates seem to be much lower. Let's visualize it:
+And now for the beggining of Macron's term
+
+```python
+macron = data[data["president"] == "macron"]
+macron2017 = macron[macron["year"] == 2017]
+macron2017.head(20)
+```
+
+For Chirac's term it seems that difference stems from the polling method; face-to-face approval rates seem to be much lower. Let's visualize it:
 
 ```python
 face = data[data['method'] == 'face to face']
@@ -230,6 +238,54 @@ data[data["sondage"] == "Ifop"]["method"].value_counts()
 
 To investigate bias we now compute the rolling mean of the $p_{approve}$ values and compare each method's and pollster's deviations to the mean.
 
+```python
+data = data.merge(data.groupby(['year', 'month'])['p_approve'].mean().reset_index(), on=['year', 'month'], suffixes=["", "_mean"])
+data['diff_approval'] = data['p_approve_mean'] - data['p_approve']
+```
+
+```python
+pollster_vals = {pollster: data[data["sondage"] == pollster]["diff_approval"].values for pollster in list(pollsters)}
+
+colors = plt.rcParams["axes.prop_cycle"]()
+fig, axes = plt.subplots(ncols=2, nrows=5, sharex=True, figsize=(12,16))
+axes = [ax for axs in axes for ax in axs]
+for ax, (pollster, vals) in zip(axes, pollster_vals.items()):
+    c = next(colors)["color"]
+    ax.hist(vals, alpha=.3, color=c, label=pollster)
+    ax.axvline(x=np.mean(vals), color=c, linestyle='--')
+    ax.axvline(x=0, color='black')
+
+fig.legend(loc="right", bbox_to_anchor=(1.1, .5))
+plt.xlabel(r"$\bar{p}_{approve} - p_{approve}$", fontsize=25)
+
+```
+
+And now for the bias per method:
+
+```python
+phone = data[data["method"] == "phone"]["diff_approval"].values
+internet = data[data["method"] == "internet"]["diff_approval"].values
+facetoface = data[data["method"] == "face to face"]["diff_approval"].values
+
+colors = plt.rcParams["axes.prop_cycle"]()
+fig, ax = plt.subplots(figsize=(12,8))
+
+c = next(colors)["color"]
+ax.hist(phone, label="phone", color=c, alpha=.4)
+ax.axvline(np.mean(phone), color=c, linestyle='--')
+
+c = next(colors)["color"]
+ax.hist(internet, label="internet", color=c, alpha=.4)
+ax.axvline(np.mean(internet), color=c, linestyle='--')
+
+c = next(colors)["color"]
+ax.hist(facetoface, label="face to face", color=c, alpha=.4)
+ax.axvline(np.mean(facetoface), color=c, linestyle='--')
+ax.axvline(x=0, color="black")
+
+ax.set_xlabel(r"$\bar{p}_{+}- p_+$", fontsize=25)
+plt.legend()
+```
 
 ## Todo
 
@@ -289,5 +345,25 @@ decline in popularity $\delta$, the unmeployment at month $m$, $U_m$, or
 random events that can happen during the term. 
 
 ```python
+import patsy
+import pymc3 as pm
+import theano.tensor as tt
+```
 
+```python
+num_pollsters = len(data["sondage"].unique())
+num_methods = len(data["method"].unique())
+num_response = data["samplesize"].astype(int)
+num_approve = np.floor(data["samplesize"] * data["p_approve"]).astype('int')
+
+formula = "C(sondage) + C(method)"
+```
+
+```python
+with pm.Model() as hmm_model:
+    pollster_bias = pm.Normal("alpha", 0, 1.5, shape=num_pollsters)
+    method_bias = pm.Normal("zeta", 0, 1.5, shape=num_methods)
+    mu = pm.GaussianRandomWalk("mu")
+    p = pm.Deterministic("p", tt.invlogit()) 
+    y = pm.Binomial("y", p, num_response, observed=num_approve)
 ```
