@@ -42,6 +42,16 @@ There are {len(pollsters)} pollsters: {', '.join(list(pollsters))}
 print(comment)
 ```
 
+```python
+print(data[data.president == "macron"].shape)
+print(data[data.president == "macron"].index.to_period('M').shape)
+pd.Categorical(data[data.president == "macron"].index.to_period('M')).codes
+```
+
+```python
+pd.Categorical(data["sondage"]).codes
+```
+
 Let us look at simple stats on the pollsters. First the total number of polls they've produced:
 
 ```python
@@ -82,7 +92,7 @@ doesnotrespond = 1 - approval_rates - disapproval_rates
 
 dates = data.index
 
-fig, (ax1, ax2, ax3) = plt.subplots(3, figsize=(12,8))
+fig, (ax1, ax2, ax3) = plt.subplots(3, figsize=(12,16))
 ax1.plot(dates, approval_rates, 'o')
 ax1.set_ylim(0, 1)
 ax1.set_ylabel("Does approve")
@@ -348,6 +358,13 @@ random events that can happen during the term.
 import patsy
 import pymc3 as pm
 import theano.tensor as tt
+
+data["sondage_cat"] = pd.Categorical(data["sondage"]).codes
+data["method_cat"] = pd.Categorical(data["method"]).codes
+data["num_approve"] = np.floor(data["samplesize"] * data["p_approve"]).astype('int')
+data["month"] = data["month"] - 1
+
+data
 ```
 
 ```python
@@ -356,14 +373,128 @@ num_methods = len(data["method"].unique())
 num_response = data["samplesize"].astype(int)
 num_approve = np.floor(data["samplesize"] * data["p_approve"]).astype('int')
 
-formula = "C(sondage) + C(method)"
+formula = "C(sondage) + C(method) - 1"
 ```
 
 ```python
 with pm.Model() as hmm_model:
     pollster_bias = pm.Normal("alpha", 0, 1.5, shape=num_pollsters)
     method_bias = pm.Normal("zeta", 0, 1.5, shape=num_methods)
-    mu = pm.GaussianRandomWalk("mu")
-    p = pm.Deterministic("p", tt.invlogit()) 
-    y = pm.Binomial("y", p, num_response, observed=num_approve)
+    
+    sigma_mu = pm.HalfNormal("sigma_mu", .1)
+    mu = pm.GaussianRandomWalk("mu", sigma=sigma_mu, shape=12)
+    
+    p = pm.Deterministic("p", pm.math.invlogit(
+        1 + 
+        mu[data["month"].values] + 
+        pollster_bias[data["sondage_cat"].values] + 
+        method_bias[data["method_cat"].values])
+    ) 
+    y = pm.Binomial("y", data["samplesize"].values, p, observed=data["num_approve"].values)
+```
+
+Each observation consists in (num_response, num_approve, month_id, pollster_id, method_id)
+
+```python
+with hmm_model:
+    prior = pm.sample_prior_predictive(1000)
+```
+
+```python
+prior
+```
+
+```python
+import pymc3 as pm
+```
+
+```python
+pollster_id = pd.Categorical(data["sondage"]).codes
+method_id = pd.Categorical(data["method"]).codes
+months = np.hstack(
+    [pd.Categorical(data[data.president == president].index.to_period('M')).codes for president in data.president.unique()]
+)
+respondants = data["samplesize"].astype('int').values
+approvals = (data['samplesize'] * data['p_approve']).astype('int').values
+```
+
+```python
+num_pollsters = len(np.unique(pollster_id))
+num_method = len(np.unique(method_id))
+num_months = np.max(months) + 1
+
+with pm.Model() as pooled_popularity:
+    alpha_p = pm.Normal("alpha_p", 0, .15, shape=num_pollsters)
+    alpha_m = pm.Normal("alpha_m", 0, .15, shape=num_method)
+
+    #mu_0 = pm.Normal("mu_0", 0.41, 0.20)
+    mu = pm.GaussianRandomWalk(
+        "mu",
+        sigma=.25,
+        shape=num_months
+        )
+
+    popularity = pm.Deterministic(
+        "popularity",
+        pm.math.invlogit(mu[months] + alpha_p[pollster_id] + alpha_m[method_id]),
+    ).squeeze()
+
+    N_approve = pm.Binomial("N_approve", respondants, popularity, observed=approvals)
+```
+
+```python
+with pooled_popularity:
+    posterior = pm.sample(1000, chains=2)
+```
+
+```python
+import arviz as az
+```
+
+```python
+az.plot_trace(posterior, var_names=['alpha_p', 'alpha_m'])
+```
+
+```python
+np.var(posterior['popularity'], axis=0)
+```
+
+```python
+import matplotlib.pyplot as plt
+
+def inv_logit(p):
+    return np.exp(p) / (1 + np.exp(p))
+
+fig, ax = plt.subplots(figsize=(12,8))
+ax.plot(range(60), np.mean(inv_logit(posterior['mu']), axis=0))
+ax.plot(range(60), np.var(inv_logit(posterior['mu']), axis=0))
+ax.set_ylabel("Popularity")
+ax.set_xlabel("Months into term");
+```
+
+```python
+def inv_logit(p):
+    return np.exp(p) / (1 + np.exp(p))
+
+fig, ax = plt.subplots(figsize=(12,8))
+for i in range(1000):
+    ax.plot(range(60), inv_logit(posterior['mu'][i,:]), alpha=.005, color="blue")
+ax.set_ylabel("Popularity")
+ax.set_xlabel("Months into term");
+```
+
+```python
+np.mean(inv_logit(posterior['alpha_p']), axis=0)
+```
+
+```python
+np.mean(inv_logit(posterior['alpha_m']), axis=0)
+```
+
+```python
+pd.Categorical(data['method']).unique()
+```
+
+```python
+
 ```
