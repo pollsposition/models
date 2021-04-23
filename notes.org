@@ -1,6 +1,6 @@
 #+TITLE: Modeling the president's popularity
 #+AUTHOR: Rémi Louf
-#+OPTIONS: toc:nil num:nil author:t date:t title:t
+#+OPTIONS: toc:nil num:nil author:t date:t title:t d:(not "todo")
 
 #+SETUPFILE: latex-setup.org
 
@@ -14,7 +14,9 @@
 
 * Data analysis
 
-** TODO Copy data analysis over from notebook
+:TODO:
+ - TODO Copy data analysis over from notebook
+:END:
 
 * Model
 
@@ -94,7 +96,6 @@ data.head(5)
 : 2002-05-23   chirac2     BVA        1054         phone       0.52          0.37  2002      5
 : 2002-05-26   chirac2   Ipsos         907         phone       0.48          0.48  2002      5
 : 2002-06-16   chirac2    Ifop         974         phone       0.49          0.43  2002      6
-***
 
 ** Implementations in PyMC3
 
@@ -150,7 +151,7 @@ def inv_logit(x):
 
  We plot the posterior distribution of the pollsters' bias $\alpha_p$ and the methods' bias $\alpha_m$
 
- #+begin_src python :session model :results graphics file :file figures/popularity-hmm-pooled-unpooled-biases-trace.png
+ #+begin_src python :session model :exports nil :results graphics file :file figures/popularity-hmm-pooled-unpooled-biases-trace.png
 az.plot_trace(posterior, var_names=['alpha_p', 'alpha_m'])
 plt.savefig('figures/popularity-hmm-pooled-unpooled-biases-trace.png')
  #+end_src
@@ -197,6 +198,8 @@ plt.savefig('figures/popularity-hmm-pooled-unpooled-posterior-popularity.png')
 
  The model does learn the general decrease in popularity as the terms progress.
 
-**** TODO try different values for the prior variance of the random walk $\sigma$
-**** TODO learn the variance of the random walk sigma
-**** TODO set up a prediction pipeline for the popularity over the next months
+ :TODO:
+ - try different values for the prior variance of the random walk $\sigma$
+ - learn the variance of the random walk sigma
+ - set up a prediction pipeline for the popularity over the next months
+ :END:
