@@ -489,7 +489,9 @@ post_pop.mean("sample").plot(ax=ax);
 ```
 
 ## TODO
-    
+
+- Model an interaction between method and pollster.
+
 - Posterior predictive analysis: distribution of $p_{\mathrm{approve}}$ for each pollster and method. We can plot the approval rates for each poll for each president but we do not except anything to come from it because we mixed all the terms (although we may see a difference due to new pollsters appearing).
 
 - Re-read the paper by Gellman et al. on predicting the US presidential election. We may be able to catch something new given our experience with this first model.
@@ -505,8 +507,4 @@ The natural next step is partial pooling for the values of `mu`
 ```python
 %load_ext watermark
 %watermark -n -u -v -iv
-```
-
-```python
-
 ```
