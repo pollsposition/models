@@ -24,16 +24,21 @@ import numpy as np
 import matplotlib.pyplot as plt
 import pymc3 as pm
 import theano.tensor as tt
+
+from scipy.special import expit as logistic
 ```
 
 ## Exploratory data analysis
 
 ```python
 data = pd.read_csv('./plot_data/raw_polls.csv', parse_dates = True, index_col="Unnamed: 0")
+
 data['year'] = data.index.year
 data['month'] = data.index.month
 data['month_name'] = data.index.month_name()
+
 data['sondage'] = data['sondage'].replace('Yougov', 'YouGov')
+data['method'] = data['method'].replace('face-to-face&internet', 'face to face')
 print("columns: ", data.columns, "\n")
 
 minimum = np.min(data[["year"]].values)
@@ -44,16 +49,6 @@ comment = f"""The dataset contains {len(data)} polls between the years {minimum}
 There are {len(pollsters)} pollsters: {', '.join(list(pollsters))}
 """
 print(comment)
-```
-
-```python
-print(data[data.president == "macron"].shape)
-print(data[data.president == "macron"].index.to_period('M').shape)
-pd.Categorical(data[data.president == "macron"].index.to_period('M')).codes
-```
-
-```python
-pd.Categorical(data["sondage"]).codes
 ```
 
 Let us look at simple stats on the pollsters. First the total number of polls they've produced:
@@ -99,7 +94,7 @@ doesnotrespond = 1 - approval_rates - disapproval_rates
 dates = data.index
 
 fig, (ax1, ax2, ax3) = plt.subplots(3, figsize=(12,16))
-ax1.plot(dates, approval_rates, 'o')
+ax1.plot(dates, approval_rates, 'o', alpha=.5)
 ax1.set_ylim(0, 1)
 ax1.set_ylabel("Does approve")
 for date in newterm_dates:
@@ -130,27 +125,18 @@ We notice two things when looking at these plots:
 ### Method bias
 
 ```python
-phone = data[data["method"] == "phone"]["p_approve"].values
-internet = data[data["method"] == "internet"]["p_approve"].values
-facetoface = data[data["method"] == "face to face"]["p_approve"].values
+method_vals = {method: data[data["method"] == method]["p_approve"].values for method in list(data["method"].unique())}
 
 colors = plt.rcParams["axes.prop_cycle"]()
 fig, ax = plt.subplots(figsize=(11,5))
 
-c = next(colors)["color"]
-ax.hist(phone, label="phone", color=c, alpha=.4)
-ax.axvline(np.mean(phone), color=c, linestyle='--')
-
-c = next(colors)["color"]
-ax.hist(internet, label="internet", color=c, alpha=.4)
-ax.axvline(np.mean(internet), color=c, linestyle='--')
-
-c = next(colors)["color"]
-ax.hist(facetoface, label="face to face", color=c, alpha=.4)
-ax.axvline(np.mean(facetoface), color=c, linestyle='--')
+for method, vals in method_vals.items():
+    c = next(colors)["color"]
+    ax.hist(vals, alpha=.3, color=c, label=method)
+    ax.axvline(x=np.mean(vals), color=c, linestyle='--')
 
 ax.set_xlabel(r"$p_{+}$")
-plt.legend();
+ax.legend();
 ```
 
 ### Pollster bias
@@ -165,8 +151,8 @@ pollster_vals = {pollster: data[data["sondage"] == pollster]["p_approve"].values
 
 colors = plt.rcParams["axes.prop_cycle"]()
 fig, axes = plt.subplots(ncols=2, nrows=5, sharex=True, figsize=(12,16))
-axes = [ax for axs in axes for ax in axs]
-for ax, (pollster, vals) in zip(axes, pollster_vals.items()):
+
+for ax, (pollster, vals) in zip(axes.ravel(), pollster_vals.items()):
     c = next(colors)["color"]
     ax.hist(vals, alpha=.3, color=c, label=pollster)
     ax.axvline(x=np.mean(vals), color=c, linestyle='--')
@@ -191,7 +177,7 @@ dates = [datetime.datetime.strptime(f"{year}-{month}", '%Y-%m') for year in year
 newterm_dates = data.reset_index().groupby("president").first()["index"].values
 
 fig, ax = plt.subplots(figsize=(10,4))
-ax.plot(dates, values, 'o')
+ax.plot(dates, values, 'o', alpha=.5)
 for date in newterm_dates:
     ax.axvline(date, linestyle='--')
 ```
@@ -264,9 +250,8 @@ pollster_vals = {pollster: data[data["sondage"] == pollster]["diff_approval"].va
 
 colors = plt.rcParams["axes.prop_cycle"]()
 fig, axes = plt.subplots(ncols=2, nrows=5, sharex=True, figsize=(12,16))
-axes = [ax for axs in axes for ax in axs]
 
-for ax, (pollster, vals) in zip(axes, pollster_vals.items()):
+for ax, (pollster, vals) in zip(axes.ravel(), pollster_vals.items()):
     c = next(colors)["color"]
     ax.hist(vals, alpha=.3, color=c, label=pollster)
     ax.axvline(x=np.mean(vals), color=c, linestyle='--')
@@ -279,28 +264,19 @@ plt.xlabel(r"$p_{approve} - \bar{p}_{approve}$", fontsize=25);
 And now for the bias per method:
 
 ```python
-phone = data[data["method"] == "phone"]["diff_approval"].values
-internet = data[data["method"] == "internet"]["diff_approval"].values
-facetoface = data[data["method"] == "face to face"]["diff_approval"].values
+method_vals = {method: data[data["method"] == method]["diff_approval"].values for method in list(data["method"].unique())}
 
 colors = plt.rcParams["axes.prop_cycle"]()
-fig, ax = plt.subplots()
+fig, ax = plt.subplots(figsize=(11, 5))
 
-c = next(colors)["color"]
-ax.hist(phone, label="phone", color=c, alpha=.4)
-ax.axvline(np.mean(phone), color=c, linestyle='--')
+for method, vals in method_vals.items():
+    c = next(colors)["color"]
+    ax.hist(vals, alpha=.3, color=c, label=method)
+    ax.axvline(x=np.mean(vals), color=c, linestyle='--')
 
-c = next(colors)["color"]
-ax.hist(internet, label="internet", color=c, alpha=.4)
-ax.axvline(np.mean(internet), color=c, linestyle='--')
-
-c = next(colors)["color"]
-ax.hist(facetoface, label="face to face", color=c, alpha=.4)
-ax.axvline(np.mean(facetoface), color=c, linestyle='--')
-
-ax.axvline(x=0, color="black")
+ax.axvline(x=0, color='black')
 ax.set_xlabel(r"$p_+ - \bar{p}_{+}$", fontsize=25)
-plt.legend();
+ax.legend();
 ```
 
 ## Todo
@@ -362,15 +338,20 @@ random events that can happen during the term.
 
 ```python
 data["num_approve"] = np.floor(data["samplesize"] * data["p_approve"]).astype('int')
-pollster_id, pollsters = data["sondage"].factorize(sort=True)
-method_id, methods = data["method"].factorize(sort=True)
-month_correspondence = {i - 1: datetime.date(2021, i, 1).strftime('%B') for i in range(1, 13)}
-month_id, months = (data["month"] - 1).values, list(month_correspondence.keys())
-
 data
 ```
 
 Each observation is uniquely identified by (president, pollster, field_date):
+
+```python
+# for coords and indexing
+pollster_id, pollsters = data["sondage"].factorize(sort=True)
+method_id, methods = data["method"].factorize(sort=True)
+month_id = np.hstack(
+    [pd.Categorical(data[data.president == president].field_date.dt.to_period('M')).codes for president in data.president.unique()]
+)
+months = np.arange(max(month_id) + 1)
+```
 
 ```python
 COORDS = {
@@ -407,47 +388,79 @@ with pooled_popularity:
     idata = pm.sample(return_inferencedata=True)
 ```
 
+We plot the posterior distribution of the pollster and method biases:
+
 ```python
 az.plot_trace(idata, var_names=['pollster_bias', 'method_bias'], compact=True);
 ```
 
+Since we are performing a logistic regression, these coefficients can be tricky to interpret. When the bias is positive, this means that we need to add to the latent popularity to get the observation, which means that the pollster/method tends to be biased towards giving higher popularity scores.
+
 ```python
-from scipy.special import expit as logistic
+az.summary(idata, round_to=2, var_names=["~popularity"])
 ```
 
 ```python
-idata.posterior["mu"]
+mean_pollster_bias = idata.posterior["pollster_bias"].mean(("chain", "draw")).to_dataframe()
+mean_pollster_bias.round(2)
 ```
 
 ```python
-fig, ax = plt.subplots(figsize=(12,8))
-ax.plot(range(60), np.mean(inv_logit(posterior['mu']), axis=0))
-ax.plot(range(60), np.var(inv_logit(posterior['mu']), axis=0))
+ax = mean_pollster_bias.plot.bar(rot=50)
+ax.set_title("$>0$ bias means pollster overestimates true popularity");
+```
+
+```python
+mean_method_bias = idata.posterior["method_bias"].mean(("chain", "draw")).to_dataframe()
+mean_method_bias.round(2)
+```
+
+```python
+ax = mean_method_bias.plot.bar(rot=50, figsize=(8, 7))
+ax.set_title("$>0$ bias means method overestimates true popularity");
+```
+
+**TODO: Interpret and compare to data.**
+
+There is a strong discrepancy for Kantar between what we observe and what the model returns. We saw earlier that all face-to-face polls were from Kantar. The bias may thus be fully captured by the face-to-face interaction. It is almost a philosophical question here whether the bias is due to the method or to the pollster, and this region of the posterior is weakly identified by the data so the coefficients corresponding to Kantar and face-to-face should not be interpreted separately.
+
+On the other hand, the posterior coefficients for the method bias agree with our observation of the data. In other words, the model has decided, Kantar does nothing special: it considers the negative bias is all due to face-to-face :D
+
+We now plot the posterior values of `mu`. Since the model is completely pooled, we only have 60 values, which correspond to a full term:
+
+```python
+post_pop = logistic(idata.posterior["mu"].stack(sample=("chain", "draw")))
+
+fig, ax = plt.subplots()
+for i in np.random.choice(post_pop.coords["sample"].size, size=1000):
+    ax.plot(idata.posterior.coords["month"], post_pop.isel(sample=i), alpha=.01, color="blue")
+post_pop.mean("sample").plot(ax=ax, color="orange", lw=2);
 ax.set_ylabel("Popularity")
 ax.set_xlabel("Months into term");
 ```
 
 ```python
-def inv_logit(p):
-    return np.exp(p) / (1 + np.exp(p))
-
-fig, ax = plt.subplots(figsize=(12,8))
-for i in range(1000):
-    ax.plot(range(60), inv_logit(posterior['mu'][i,:]), alpha=.005, color="blue")
-ax.set_ylabel("Popularity")
-ax.set_xlabel("Months into term");
+ax = az.plot_hdi(idata.posterior.coords["month"], logistic(idata.posterior["mu"]))
+post_pop.mean("sample").plot(ax=ax);
 ```
 
-```python
-np.mean(inv_logit(posterior['alpha_p']), axis=0)
-```
+## TODO
+    
+- Posterior predictive analysis: distribution of $p_{\mathrm{approve}}$ for each pollster and method. We can plot the approval rates for each poll for each president but we do not except anything to come from it because we mixed all the terms (although we may see a difference due to new pollsters appearing).
+
+- Re-read the paper by Gellman et al. on predicting the US presidential election. We may be able to catch something new given our experience with this first model.
+
+- Try out-of-sample popularity prediction.
+
+- Test the sensitivity to $\sigma$ in the random walk.
+
+- Learn $\sigma$ from data?
+
+The natural next step is partial pooling for the values of `mu`
 
 ```python
-np.mean(inv_logit(posterior['alpha_m']), axis=0)
-```
-
-```python
-pd.Categorical(data['method']).unique()
+%load_ext watermark
+%watermark -n -u -v -iv
 ```
 
 ```python
