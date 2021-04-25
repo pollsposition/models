@@ -19,26 +19,27 @@ jupyter:
 import datetime
 
 import arviz as az
-import pandas as pd
-import numpy as np
 import matplotlib.pyplot as plt
+import numpy as np
+import pandas as pd
 import pymc3 as pm
 import theano.tensor as tt
-
 from scipy.special import expit as logistic
 ```
 
 ## Exploratory data analysis
 
 ```python
-data = pd.read_csv('./plot_data/raw_polls.csv', parse_dates = True, index_col="Unnamed: 0")
+data = pd.read_csv(
+    "./plot_data/raw_polls.csv", parse_dates=True, index_col="Unnamed: 0"
+)
 
-data['year'] = data.index.year
-data['month'] = data.index.month
-data['month_name'] = data.index.month_name()
+data["year"] = data.index.year
+data["month"] = data.index.month
+data["month_name"] = data.index.month_name()
 
-data['sondage'] = data['sondage'].replace('Yougov', 'YouGov')
-data['method'] = data['method'].replace('face-to-face&internet', 'face to face')
+data["sondage"] = data["sondage"].replace("Yougov", "YouGov")
+data["method"] = data["method"].replace("face-to-face&internet", "face to face")
 print("columns: ", data.columns, "\n")
 
 minimum = np.min(data[["year"]].values)
@@ -63,19 +64,19 @@ For most pollsters we should be able to estimate their bias quite accurately, ho
 There are substantially more polls in the years 2017, 2018 and 2019. The lower count for 2002 and 2021 is explained by the fact that we don't have the full year.
 
 ```python
-data['year'].value_counts().sort_index()
+data["year"].value_counts().sort_index()
 ```
 
 The number of polls is homogeneous among months, except in the summer because, well, France:
 
 ```python
-data['month'].value_counts().sort_index()
+data["month"].value_counts().sort_index()
 ```
 
 When it comes to the method it seems that pollsters prefer the phone over the internet and face-to-face. There is still a substantial number of each should we have to estimate biais.
 
 ```python
-data['method'].value_counts()
+data["method"].value_counts()
 ```
 
 ## Let's look at the data!
@@ -93,20 +94,20 @@ doesnotrespond = 1 - approval_rates - disapproval_rates
 
 dates = data.index
 
-fig, (ax1, ax2, ax3) = plt.subplots(3, figsize=(12,16))
-ax1.plot(dates, approval_rates, 'o', alpha=.5)
+fig, (ax1, ax2, ax3) = plt.subplots(3, figsize=(12, 16))
+ax1.plot(dates, approval_rates, "o", alpha=0.5)
 ax1.set_ylim(0, 1)
 ax1.set_ylabel("Does approve")
 for date in newterm_dates:
     ax1.axvline(date)
 
-ax2.plot(dates, disapproval_rates, 'o', alpha=.5)
+ax2.plot(dates, disapproval_rates, "o", alpha=0.5)
 ax2.set_ylabel("Does not approve")
 ax2.set_ylim(0, 1)
 for date in newterm_dates:
     ax2.axvline(date)
-    
-ax3.plot(dates, doesnotrespond, 'o', alpha=.5)
+
+ax3.plot(dates, doesnotrespond, "o", alpha=0.5)
 ax3.set_ylabel("Does not respond")
 for date in newterm_dates:
     ax3.axvline(date)
@@ -125,15 +126,18 @@ We notice two things when looking at these plots:
 ### Method bias
 
 ```python
-method_vals = {method: data[data["method"] == method]["p_approve"].values for method in list(data["method"].unique())}
+method_vals = {
+    method: data[data["method"] == method]["p_approve"].values
+    for method in list(data["method"].unique())
+}
 
 colors = plt.rcParams["axes.prop_cycle"]()
-fig, ax = plt.subplots(figsize=(11,5))
+fig, ax = plt.subplots(figsize=(11, 5))
 
 for method, vals in method_vals.items():
     c = next(colors)["color"]
-    ax.hist(vals, alpha=.3, color=c, label=method)
-    ax.axvline(x=np.mean(vals), color=c, linestyle='--')
+    ax.hist(vals, alpha=0.3, color=c, label=method)
+    ax.axvline(x=np.mean(vals), color=c, linestyle="--")
 
 ax.set_xlabel(r"$p_{+}$")
 ax.legend();
@@ -147,15 +151,18 @@ We plot the distribution of the approval rates for each pollster. Note that this
 It is already interesting to see that the bulk of the distributions is below 0.5:
 
 ```python
-pollster_vals = {pollster: data[data["sondage"] == pollster]["p_approve"].values for pollster in list(pollsters)}
+pollster_vals = {
+    pollster: data[data["sondage"] == pollster]["p_approve"].values
+    for pollster in list(pollsters)
+}
 
 colors = plt.rcParams["axes.prop_cycle"]()
-fig, axes = plt.subplots(ncols=2, nrows=5, sharex=True, figsize=(12,16))
+fig, axes = plt.subplots(ncols=2, nrows=5, sharex=True, figsize=(12, 16))
 
 for ax, (pollster, vals) in zip(axes.ravel(), pollster_vals.items()):
     c = next(colors)["color"]
-    ax.hist(vals, alpha=.3, color=c, label=pollster)
-    ax.axvline(x=np.mean(vals), color=c, linestyle='--')
+    ax.hist(vals, alpha=0.3, color=c, label=pollster)
+    ax.axvline(x=np.mean(vals), color=c, linestyle="--")
     ax.set_xlabel(r"$p_{+}$")
     ax.legend()
 ```
@@ -165,21 +172,30 @@ for ax, (pollster, vals) in zip(axes.ravel(), pollster_vals.items()):
 We now compute the rolling variance of the approval rates. We weigh each poll equally, even though we probably should weigh them according to their respective sample size.
 
 ```python
-rolling_std = data.reset_index().groupby(['year', 'month']).std().reset_index()[["year", "month", "p_approve"]]
+rolling_std = (
+    data.reset_index()
+    .groupby(["year", "month"])
+    .std()
+    .reset_index()[["year", "month", "p_approve"]]
+)
 rolling_std
 ```
 
 ```python
 years = [f"{i}" for i in range(2003, 2021)]
 values = rolling_std[rolling_std["year"].between(2003, 2020)]["p_approve"].values
-dates = [datetime.datetime.strptime(f"{year}-{month}", '%Y-%m') for year in years for month in range(1, 13) ]
+dates = [
+    datetime.datetime.strptime(f"{year}-{month}", "%Y-%m")
+    for year in years
+    for month in range(1, 13)
+]
 
 newterm_dates = data.reset_index().groupby("president").first()["index"].values
 
-fig, ax = plt.subplots(figsize=(10,4))
-ax.plot(dates, values, 'o', alpha=.5)
+fig, ax = plt.subplots(figsize=(10, 4))
+ax.plot(dates, values, "o", alpha=0.5)
 for date in newterm_dates:
-    ax.axvline(date, linestyle='--')
+    ax.axvline(date, linestyle="--")
 ```
 
 There is an abnormally high variance for Chirac's second term, and for the beggining of Macron's term. As a matter of fact, the previous scatterplot of $p_{approve}$ clearly shows almost two different curves. Let's look at the data for Chirac's term directly:
@@ -201,20 +217,20 @@ macron2017.head(20)
 For Chirac's term it seems that difference stems from the polling method; face-to-face approval rates seem to be much lower. Let's visualize it:
 
 ```python
-face = data[data['method'] == 'face to face']
+face = data[data["method"] == "face to face"]
 dates_face = face.index
 
-other = data[data['method'] != 'face to face']
+other = data[data["method"] != "face to face"]
 dates_other = other.index
 
 newterm_dates = data.reset_index().groupby("president").first()["index"].values
 
 
-fig, ax = plt.subplots(figsize=(10,4))
-ax.plot(dates_face, face['p_approve'].values, 'o', alpha=0.4, label='face to face')
-ax.plot(dates_other, other['p_approve'].values, 'o', alpha=0.4, label='other')
+fig, ax = plt.subplots(figsize=(10, 4))
+ax.plot(dates_face, face["p_approve"].values, "o", alpha=0.4, label="face to face")
+ax.plot(dates_other, other["p_approve"].values, "o", alpha=0.4, label="other")
 for date in newterm_dates:
-    ax.axvline(date, linestyle='--')
+    ax.axvline(date, linestyle="--")
 
 ax.set_ylim(0, 1)
 ax.set_ylabel("Does approve")
@@ -238,24 +254,33 @@ data[data["sondage"] == "Ifop"]["method"].value_counts()
 To investigate bias we now compute the rolling mean of the $p_{approve}$ values and compare each method's and pollster's deviation from the mean.
 
 ```python
-data = data.reset_index().merge(data.groupby(['year', 'month'])['p_approve'].mean().reset_index(), on=['year', 'month'], suffixes=["", "_mean"]).rename(
-    columns={"index": "field_date"}
+data = (
+    data.reset_index()
+    .merge(
+        data.groupby(["year", "month"])["p_approve"].mean().reset_index(),
+        on=["year", "month"],
+        suffixes=["", "_mean"],
+    )
+    .rename(columns={"index": "field_date"})
 )
-data['diff_approval'] = data['p_approve'] - data['p_approve_mean']
+data["diff_approval"] = data["p_approve"] - data["p_approve_mean"]
 data
 ```
 
 ```python
-pollster_vals = {pollster: data[data["sondage"] == pollster]["diff_approval"].values for pollster in list(pollsters)}
+pollster_vals = {
+    pollster: data[data["sondage"] == pollster]["diff_approval"].values
+    for pollster in list(pollsters)
+}
 
 colors = plt.rcParams["axes.prop_cycle"]()
-fig, axes = plt.subplots(ncols=2, nrows=5, sharex=True, figsize=(12,16))
+fig, axes = plt.subplots(ncols=2, nrows=5, sharex=True, figsize=(12, 16))
 
 for ax, (pollster, vals) in zip(axes.ravel(), pollster_vals.items()):
     c = next(colors)["color"]
-    ax.hist(vals, alpha=.3, color=c, label=pollster)
-    ax.axvline(x=np.mean(vals), color=c, linestyle='--')
-    ax.axvline(x=0, color='black')
+    ax.hist(vals, alpha=0.3, color=c, label=pollster)
+    ax.axvline(x=np.mean(vals), color=c, linestyle="--")
+    ax.axvline(x=0, color="black")
     ax.legend()
 
 plt.xlabel(r"$p_{approve} - \bar{p}_{approve}$", fontsize=25);
@@ -264,17 +289,20 @@ plt.xlabel(r"$p_{approve} - \bar{p}_{approve}$", fontsize=25);
 And now for the bias per method:
 
 ```python
-method_vals = {method: data[data["method"] == method]["diff_approval"].values for method in list(data["method"].unique())}
+method_vals = {
+    method: data[data["method"] == method]["diff_approval"].values
+    for method in list(data["method"].unique())
+}
 
 colors = plt.rcParams["axes.prop_cycle"]()
 fig, ax = plt.subplots(figsize=(11, 5))
 
 for method, vals in method_vals.items():
     c = next(colors)["color"]
-    ax.hist(vals, alpha=.3, color=c, label=method)
-    ax.axvline(x=np.mean(vals), color=c, linestyle='--')
+    ax.hist(vals, alpha=0.3, color=c, label=method)
+    ax.axvline(x=np.mean(vals), color=c, linestyle="--")
 
-ax.axvline(x=0, color='black')
+ax.axvline(x=0, color="black")
 ax.set_xlabel(r"$p_+ - \bar{p}_{+}$", fontsize=25)
 ax.legend();
 ```
@@ -337,7 +365,7 @@ decline in popularity $\delta$, the unmeployment at month $m$, $U_m$, or
 random events that can happen during the term. 
 
 ```python
-data["num_approve"] = np.floor(data["samplesize"] * data["p_approve"]).astype('int')
+data["num_approve"] = np.floor(data["samplesize"] * data["p_approve"]).astype("int")
 data
 ```
 
@@ -348,7 +376,12 @@ Each observation is uniquely identified by (president, pollster, field_date):
 pollster_id, pollsters = data["sondage"].factorize(sort=True)
 method_id, methods = data["method"].factorize(sort=True)
 month_id = np.hstack(
-    [pd.Categorical(data[data.president == president].field_date.dt.to_period('M')).codes for president in data.president.unique()]
+    [
+        pd.Categorical(
+            data[data.president == president].field_date.dt.to_period("M")
+        ).codes
+        for president in data.president.unique()
+    ]
 )
 months = np.arange(max(month_id) + 1)
 ```
@@ -358,29 +391,33 @@ COORDS = {
     "pollster": pollsters,
     "method": methods,
     "month": months,
-    "observation": data.set_index(["president", "sondage", "field_date"]).index
+    "observation": data.set_index(["president", "sondage", "field_date"]).index,
 }
 ```
 
 ```python
 with pm.Model(coords=COORDS) as pooled_popularity:
-    
-    pollster_bias = pm.Normal("pollster_bias", 0, .15, dims="pollster")
-    method_bias = pm.Normal("method_bias", 0, .15, dims="method")
+
+    pollster_bias = pm.Normal("pollster_bias", 0, 0.15, dims="pollster")
+    method_bias = pm.Normal("method_bias", 0, 0.15, dims="method")
     # sigma_mu = pm.HalfNormal("sigma_mu", .1)
-    mu = pm.GaussianRandomWalk(
-        "mu",
-        sigma=.25,
-        dims="month"
-        )
+    mu = pm.GaussianRandomWalk("mu", sigma=0.25, dims="month")
 
     popularity = pm.Deterministic(
         "popularity",
-        pm.math.invlogit(mu[month_id] + pollster_bias[pollster_id] + method_bias[method_id]),
-        dims="observation"
+        pm.math.invlogit(
+            mu[month_id] + pollster_bias[pollster_id] + method_bias[method_id]
+        ),
+        dims="observation",
     )
 
-    N_approve = pm.Binomial("N_approve", p=popularity, n=data["samplesize"], observed=data["num_approve"], dims="observation")
+    N_approve = pm.Binomial(
+        "N_approve",
+        p=popularity,
+        n=data["samplesize"],
+        observed=data["num_approve"],
+        dims="observation",
+    )
 ```
 
 ```python
@@ -391,7 +428,7 @@ with pooled_popularity:
 We plot the posterior distribution of the pollster and method biases:
 
 ```python
-az.plot_trace(idata, var_names=['pollster_bias', 'method_bias'], compact=True);
+az.plot_trace(idata, var_names=["pollster_bias", "method_bias"], compact=True);
 ```
 
 Since we are performing a logistic regression, these coefficients can be tricky to interpret. When the bias is positive, this means that we need to add to the latent popularity to get the observation, which means that the pollster/method tends to be biased towards giving higher popularity scores.
@@ -401,7 +438,9 @@ az.summary(idata, round_to=2, var_names=["~popularity"])
 ```
 
 ```python
-mean_pollster_bias = idata.posterior["pollster_bias"].mean(("chain", "draw")).to_dataframe()
+mean_pollster_bias = (
+    idata.posterior["pollster_bias"].mean(("chain", "draw")).to_dataframe()
+)
 mean_pollster_bias.round(2)
 ```
 
@@ -433,8 +472,13 @@ post_pop = logistic(idata.posterior["mu"].stack(sample=("chain", "draw")))
 
 fig, ax = plt.subplots()
 for i in np.random.choice(post_pop.coords["sample"].size, size=1000):
-    ax.plot(idata.posterior.coords["month"], post_pop.isel(sample=i), alpha=.01, color="blue")
-post_pop.mean("sample").plot(ax=ax, color="orange", lw=2);
+    ax.plot(
+        idata.posterior.coords["month"],
+        post_pop.isel(sample=i),
+        alpha=0.01,
+        color="blue",
+    )
+post_pop.mean("sample").plot(ax=ax, color="orange", lw=2)
 ax.set_ylabel("Popularity")
 ax.set_xlabel("Months into term");
 ```
