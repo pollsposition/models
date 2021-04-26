@@ -395,18 +395,18 @@ COORDS = {
 }
 ```
 
+### Fixed `mu` for GRW
+
 ```python
 with pm.Model(coords=COORDS) as pooled_popularity:
 
-    pollster_bias = pm.Normal("pollster_bias", 0, 0.15, dims="pollster")
-    method_bias = pm.Normal("method_bias", 0, 0.15, dims="method")
-    # sigma_mu = pm.HalfNormal("sigma_mu", .1)
-    mu = pm.GaussianRandomWalk("mu", sigma=0.25, dims="month")
+    bias = pm.Normal("bias", 0, 0.15, dims=("pollster", "method"))
+    mu = pm.GaussianRandomWalk("mu", sigma=1., dims="month")
 
     popularity = pm.Deterministic(
         "popularity",
         pm.math.invlogit(
-            mu[month_id] + pollster_bias[pollster_id] + method_bias[method_id]
+            mu[month_id] + bias[pollster_id, method_id]
         ),
         dims="observation",
     )
@@ -418,17 +418,14 @@ with pm.Model(coords=COORDS) as pooled_popularity:
         observed=data["num_approve"],
         dims="observation",
     )
-```
-
-```python
-with pooled_popularity:
+    
     idata = pm.sample(return_inferencedata=True)
 ```
 
 We plot the posterior distribution of the pollster and method biases:
 
 ```python
-az.plot_trace(idata, var_names=["pollster_bias", "method_bias"], compact=True);
+az.plot_trace(idata, var_names=["~popularity"], compact=True);
 ```
 
 Since we are performing a logistic regression, these coefficients can be tricky to interpret. When the bias is positive, this means that we need to add to the latent popularity to get the observation, which means that the pollster/method tends to be biased towards giving higher popularity scores.
@@ -439,27 +436,17 @@ az.summary(idata, round_to=2, var_names=["~popularity"])
 
 ```python
 mean_pollster_bias = (
-    idata.posterior["pollster_bias"].mean(("chain", "draw")).to_dataframe()
+    idata.posterior["bias"].mean(("chain", "draw")).to_dataframe()
 )
 mean_pollster_bias.round(2)
 ```
 
 ```python
-ax = mean_pollster_bias.plot.bar(rot=50)
+ax = mean_pollster_bias.plot.bar(figsize=(14, 8))
 ax.set_title("$>0$ bias means pollster overestimates true popularity");
 ```
 
-```python
-mean_method_bias = idata.posterior["method_bias"].mean(("chain", "draw")).to_dataframe()
-mean_method_bias.round(2)
-```
-
-```python
-ax = mean_method_bias.plot.bar(rot=50, figsize=(8, 7))
-ax.set_title("$>0$ bias means method overestimates true popularity");
-```
-
-**TODO: Interpret and compare to data.**
+### TODO: Interpret and compare to data
 
 There is a strong discrepancy for Kantar between what we observe and what the model returns. We saw earlier that all face-to-face polls were from Kantar. The bias may thus be fully captured by the face-to-face interaction. It is almost a philosophical question here whether the bias is due to the method or to the pollster, and this region of the posterior is weakly identified by the data so the coefficients corresponding to Kantar and face-to-face should not be interpreted separately.
 
@@ -485,7 +472,104 @@ ax.set_xlabel("Months into term");
 
 ```python
 ax = az.plot_hdi(idata.posterior.coords["month"], logistic(idata.posterior["mu"]))
-post_pop.mean("sample").plot(ax=ax);
+post_pop.median("sample").plot(ax=ax);
+```
+
+```python
+az.plot_posterior(logistic(idata.posterior["mu"].sel(month=42)));
+```
+
+### Infer `mu` of GRW
+
+```python
+with pm.Model(coords=COORDS) as pooled_popularity:
+
+    bias = pm.Normal("bias", 0, 0.15, dims=("pollster", "method"))
+    sigma_mu = pm.HalfNormal("sigma_mu", 1.)
+    mu = pm.GaussianRandomWalk("mu", sigma=sigma_mu, dims="month")
+
+    popularity = pm.Deterministic(
+        "popularity",
+        pm.math.invlogit(
+            mu[month_id] + bias[pollster_id, method_id]
+        ),
+        dims="observation",
+    )
+
+    N_approve = pm.Binomial(
+        "N_approve",
+        p=popularity,
+        n=data["samplesize"],
+        observed=data["num_approve"],
+        dims="observation",
+    )
+    
+    idata = pm.sample(tune=2000, draws=2000, return_inferencedata=True)
+```
+
+```python
+az.plot_trace(idata, var_names=["~popularity"], compact=True);
+```
+
+```python
+az.summary(idata, round_to=2, var_names=["~popularity"])
+```
+
+```python
+post_pop = logistic(idata.posterior["mu"].stack(sample=("chain", "draw")))
+
+fig, ax = plt.subplots()
+for i in np.random.choice(post_pop.coords["sample"].size, size=1000):
+    ax.plot(
+        idata.posterior.coords["month"],
+        post_pop.isel(sample=i),
+        alpha=0.01,
+        color="blue",
+    )
+post_pop.mean("sample").plot(ax=ax, color="orange", lw=2)
+ax.set_ylabel("Popularity")
+ax.set_xlabel("Months into term");
+```
+
+### Hierarchical model
+
+```python
+president_id, presidents = data["president"].factorize(sort=False)
+COORDS["president"] = presidents
+```
+
+```python
+with pm.Model(coords=COORDS) as hierarchical_popularity:
+
+    bias = pm.Normal("bias", 0, 0.15, dims=("pollster", "method"))
+    
+    sigma_mu = pm.HalfNormal("sigma_mu", 1.)
+    mu = pm.GaussianRandomWalk("mu", sigma=sigma_mu, dims=("president", "month"))
+
+    popularity = pm.Deterministic(
+        "popularity",
+        pm.math.invlogit(
+             mu[president_id, month_id] + bias[pollster_id, method_id]
+        ),
+        dims="observation",
+    )
+
+    N_approve = pm.Binomial(
+        "N_approve",
+        p=popularity,
+        n=data["samplesize"],
+        observed=data["num_approve"],
+        dims="observation",
+    )
+```
+
+```python
+hierarchical_popularity.check_test_point()
+```
+
+```python
+with hierarchical_popularity:
+    idata = pm.sample(return_inferencedata=True)
 ```
 
 ## TODO
