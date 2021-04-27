@@ -36,7 +36,6 @@ data = pd.read_csv(
 
 data["year"] = data.index.year
 data["month"] = data.index.month
-data["month_name"] = data.index.month_name()
 
 data["sondage"] = data["sondage"].replace("Yougov", "YouGov")
 data["method"] = data["method"].replace("face-to-face&internet", "face to face")
@@ -50,6 +49,10 @@ comment = f"""The dataset contains {len(data)} polls between the years {minimum}
 There are {len(pollsters)} pollsters: {', '.join(list(pollsters))}
 """
 print(comment)
+```
+
+```python
+data.query("sondage == 'Kantar' & method == 'internet'")["method"]
 ```
 
 Let us look at simple stats on the pollsters. First the total number of polls they've produced:
@@ -369,12 +372,13 @@ data["num_approve"] = np.floor(data["samplesize"] * data["p_approve"]).astype("i
 data
 ```
 
-Each observation is uniquely identified by (president, pollster, field_date):
+Each observation is uniquely identified by `(pollster, field_date)`:
 
 ```python
 # for coords and indexing
-pollster_id, pollsters = data["sondage"].factorize(sort=True)
-method_id, methods = data["method"].factorize(sort=True)
+#pollster_id, pollsters = data["sondage"].factorize(sort=True)
+#method_id, methods = data["method"].factorize(sort=True)
+pollster_by_method_id, pollster_by_methods = data.set_index(["sondage", "method"]).index.factorize(sort=True)
 month_id = np.hstack(
     [
         pd.Categorical(
@@ -388,8 +392,9 @@ months = np.arange(max(month_id) + 1)
 
 ```python
 COORDS = {
-    "pollster": pollsters,
-    "method": methods,
+    #"pollster": pollsters,
+    #"method": methods,
+    "pollster_by_method": pollster_by_methods,
     "month": months,
     "observation": data.set_index(["sondage", "field_date"]).index,
 }
@@ -398,15 +403,34 @@ COORDS = {
 ### Fixed `mu` for GRW
 
 ```python
+data.set_index(["sondage", "method"])#.index.sort_values().unique()
+```
+
+```python
+data.set_index(["sondage", "method"]).index.factorize(sort=True)
+```
+
+```python
+crosstab.stack()[crosstab.stack() != 0].index
+```
+
+```python
+crosstab = pd.crosstab(data.sondage, data.method)
+crosstab
+```
+
+We can only estimate the bias for internet and phone, not for face-to-face and phone&internet, as they are only conducted by one pollster (Kantar and Ifop respectively). Similarly, we can use an interaction term only for those pollsters which use more than one method, i.e BVA, Ifop and Ipsos.
+
+```python
 with pm.Model(coords=COORDS) as pooled_popularity:
 
-    bias = pm.Normal("bias", 0, 0.15, dims=("pollster", "method"))
+    bias = pm.Normal("bias", 0, 0.15, dims="pollster_by_method")
     mu = pm.GaussianRandomWalk("mu", sigma=1., dims="month")
 
     popularity = pm.Deterministic(
         "popularity",
         pm.math.invlogit(
-            mu[month_id] + bias[pollster_id, method_id]
+            mu[month_id] + bias[pollster_by_method_id]
         ),
         dims="observation",
     )
@@ -490,14 +514,14 @@ az.plot_posterior(logistic(idata.posterior["mu"].sel(month=42)));
 ```python
 with pm.Model(coords=COORDS) as pooled_popularity:
 
-    bias = pm.Normal("bias", 0, 0.15, dims=("pollster", "method"))
-    sigma_mu = pm.HalfNormal("sigma_mu", 1.)
+    bias = pm.Normal("bias", 0, 0.15, dims="pollster_by_method")
+    sigma_mu = pm.HalfNormal("sigma_mu", 0.5)
     mu = pm.GaussianRandomWalk("mu", sigma=sigma_mu, dims="month")
 
     popularity = pm.Deterministic(
         "popularity",
         pm.math.invlogit(
-            mu[month_id] + bias[pollster_id, method_id]
+            mu[month_id] + bias[pollster_by_method_id]
         ),
         dims="observation",
     )
@@ -541,15 +565,15 @@ ax.set_xlabel("Months into term");
 
 ```python
 with pm.Model(coords=COORDS) as pooled_popularity:
-
-    bias = pm.Normal("bias", 0, 0.15, dims=("pollster", "method"))
-    sigma_mu = pm.HalfNormal("sigma_mu", 1.)
+    
+    bias = pm.Normal("bias", 0, 0.15, dims="pollster_by_method")
+    sigma_mu = pm.HalfNormal("sigma_mu", 0.5)
     mu = pm.GaussianRandomWalk("mu", sigma=sigma_mu, dims="month")
 
     popularity = pm.Deterministic(
         "popularity",
         pm.math.invlogit(
-            mu[month_id] + bias[pollster_id, method_id]
+            mu[month_id] + bias[pollster_by_method_id]
         ),
         dims="observation",
     )
@@ -601,17 +625,23 @@ COORDS["president"] = presidents
 ```
 
 ```python
-with pm.Model(coords=COORDS) as hierarchical_popularity:
+COORDS["pollster_by_method"]
+```
 
-    bias = pm.Normal("bias", 0, 0.15, dims=("pollster", "method"))
+```python
+with pm.Model(coords=COORDS) as hierarchical_popularity:
     
-    sigma_mu = pm.HalfNormal("sigma_mu", 1.)
+    bias = pm.Normal("bias", 0, 0.15, dims="pollster_by_method")
+    print(bias.tag.test_value.shape)
+    
+    #sigma_mu = pm.HalfNormal("sigma_mu", 0.5)
+    sigma_mu = pm.Gamma("ls_trend", alpha=20, beta=1)
     mu = pm.GaussianRandomWalk("mu", sigma=sigma_mu, dims=("president", "month"))
 
     popularity = pm.Deterministic(
         "popularity",
         pm.math.invlogit(
-             mu[president_id, month_id] + bias[pollster_id, method_id]
+             mu[president_id, month_id] + bias[pollster_by_method_id]
         ),
         dims="observation",
     )
@@ -631,7 +661,7 @@ hierarchical_popularity.check_test_point()
 
 ```python
 with hierarchical_popularity:
-    idata = pm.sample(return_inferencedata=True, init="adapt_full")
+    idata = pm.sample(return_inferencedata=True)
 ```
 
 ```python
