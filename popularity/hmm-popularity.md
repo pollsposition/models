@@ -52,7 +52,8 @@ print(comment)
 ```
 
 ```python
-data.query("sondage == 'Kantar' & method == 'internet'")["method"]
+# need to confirm if we wanna do that
+data.loc[(data.sondage == 'Kantar') & (data.method == "internet"), "method"] = "face to face"
 ```
 
 Let us look at simple stats on the pollsters. First the total number of polls they've produced:
@@ -372,6 +373,13 @@ data["num_approve"] = np.floor(data["samplesize"] * data["p_approve"]).astype("i
 data
 ```
 
+```python
+pd.crosstab(data.sondage, data.method)
+```
+
+We can only estimate the bias for internet and phone, not for face-to-face and phone&internet, as they are only conducted by one pollster (Kantar and Ifop respectively). Similarly, we can use an interaction term only for those pollsters which use more than one method, i.e BVA, Ifop and Ipsos.
+
+
 Each observation is uniquely identified by `(pollster, field_date)`:
 
 ```python
@@ -401,25 +409,6 @@ COORDS = {
 ```
 
 ### Fixed `mu` for GRW
-
-```python
-data.set_index(["sondage", "method"])#.index.sort_values().unique()
-```
-
-```python
-data.set_index(["sondage", "method"]).index.factorize(sort=True)
-```
-
-```python
-crosstab.stack()[crosstab.stack() != 0].index
-```
-
-```python
-crosstab = pd.crosstab(data.sondage, data.method)
-crosstab
-```
-
-We can only estimate the bias for internet and phone, not for face-to-face and phone&internet, as they are only conducted by one pollster (Kantar and Ifop respectively). Similarly, we can use an interaction term only for those pollsters which use more than one method, i.e BVA, Ifop and Ipsos.
 
 ```python
 with pm.Model(coords=COORDS) as pooled_popularity:
@@ -466,7 +455,7 @@ mean_pollster_bias.round(2)
 ```
 
 ```python
-ax = mean_pollster_bias.plot.bar(figsize=(14, 8))
+ax = mean_pollster_bias.plot.bar(figsize=(14, 8), rot=30)
 ax.set_title("$>0$ bias means pollster overestimates true popularity");
 ```
 
@@ -625,14 +614,9 @@ COORDS["president"] = presidents
 ```
 
 ```python
-COORDS["pollster_by_method"]
-```
-
-```python
 with pm.Model(coords=COORDS) as hierarchical_popularity:
     
     bias = pm.Normal("bias", 0, 0.15, dims="pollster_by_method")
-    print(bias.tag.test_value.shape)
     
     #sigma_mu = pm.HalfNormal("sigma_mu", 0.5)
     sigma_mu = pm.Gamma("ls_trend", alpha=20, beta=1)
