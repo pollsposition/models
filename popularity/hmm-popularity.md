@@ -391,7 +391,7 @@ COORDS = {
     "pollster": pollsters,
     "method": methods,
     "month": months,
-    "observation": data.set_index(["president", "sondage", "field_date"]).index,
+    "observation": data.set_index(["sondage", "field_date"]).index,
 }
 ```
 
@@ -471,7 +471,13 @@ ax.set_xlabel("Months into term");
 ```
 
 ```python
-ax = az.plot_hdi(idata.posterior.coords["month"], logistic(idata.posterior["mu"]))
+hdi_data = az.hdi(logistic(idata.posterior["mu"]))
+hdi_data
+```
+
+```python
+ax = az.plot_hdi(idata.posterior.coords["month"], hdi_data=hdi_data)
+ax.vlines(idata.posterior.coords["month"], hdi_data.sel(hdi="lower")["mu"], hdi_data.sel(hdi="higher")["mu"])
 post_pop.median("sample").plot(ax=ax);
 ```
 
@@ -499,6 +505,62 @@ with pm.Model(coords=COORDS) as pooled_popularity:
     N_approve = pm.Binomial(
         "N_approve",
         p=popularity,
+        n=data["samplesize"],
+        observed=data["num_approve"],
+        dims="observation",
+    )
+    
+    idata = pm.sample(tune=2000, draws=2000, return_inferencedata=True)
+```
+
+```python
+az.plot_trace(idata, var_names=["~popularity"], compact=True);
+```
+
+```python
+az.summary(idata, round_to=2, var_names=["~popularity"])
+```
+
+```python
+post_pop = logistic(idata.posterior["mu"].stack(sample=("chain", "draw")))
+
+fig, ax = plt.subplots()
+for i in np.random.choice(post_pop.coords["sample"].size, size=1000):
+    ax.plot(
+        idata.posterior.coords["month"],
+        post_pop.isel(sample=i),
+        alpha=0.01,
+        color="blue",
+    )
+post_pop.mean("sample").plot(ax=ax, color="orange", lw=2)
+ax.set_ylabel("Popularity")
+ax.set_xlabel("Months into term");
+```
+
+### Model overdispersion of polls
+
+```python
+with pm.Model(coords=COORDS) as pooled_popularity:
+
+    bias = pm.Normal("bias", 0, 0.15, dims=("pollster", "method"))
+    sigma_mu = pm.HalfNormal("sigma_mu", 1.)
+    mu = pm.GaussianRandomWalk("mu", sigma=sigma_mu, dims="month")
+
+    popularity = pm.Deterministic(
+        "popularity",
+        pm.math.invlogit(
+            mu[month_id] + bias[pollster_id, method_id]
+        ),
+        dims="observation",
+    )
+
+    # overdispersion parameter
+    theta = pm.Exponential("theta_offset", 1.0) + 10.0
+
+    N_approve = pm.BetaBinomial(
+        "N_approve",
+        alpha=popularity * theta,
+        beta=(1.0 - popularity) * theta,
         n=data["samplesize"],
         observed=data["num_approve"],
         dims="observation",
@@ -569,7 +631,31 @@ hierarchical_popularity.check_test_point()
 
 ```python
 with hierarchical_popularity:
-    idata = pm.sample(return_inferencedata=True)
+    idata = pm.sample(return_inferencedata=True, init="adapt_full")
+```
+
+```python
+az.plot_trace(idata, var_names=["~popularity"], compact=True);
+```
+
+```python
+az.summary(idata, round_to=2, var_names=["~popularity"])
+```
+
+```python
+post_pop = logistic(idata.posterior["mu"].stack(sample=("chain", "draw")))
+
+fig, ax = plt.subplots()
+for i in np.random.choice(post_pop.coords["sample"].size, size=1000):
+    ax.plot(
+        idata.posterior.coords["month"],
+        post_pop.isel(sample=i),
+        alpha=0.01,
+        color="blue",
+    )
+post_pop.mean("sample").plot(ax=ax, color="orange", lw=2)
+ax.set_ylabel("Popularity")
+ax.set_xlabel("Months into term");
 ```
 
 ## TODO
