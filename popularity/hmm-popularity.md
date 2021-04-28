@@ -143,6 +143,7 @@ for method, vals in method_vals.items():
     ax.hist(vals, alpha=0.3, color=c, label=method)
     ax.axvline(x=np.mean(vals), color=c, linestyle="--")
 
+ax.set_xlim(0,1)
 ax.set_xlabel(r"$p_{+}$")
 ax.legend();
 ```
@@ -168,6 +169,7 @@ for ax, (pollster, vals) in zip(axes.ravel(), pollster_vals.items()):
     ax.hist(vals, alpha=0.3, color=c, label=pollster)
     ax.axvline(x=np.mean(vals), color=c, linestyle="--")
     ax.set_xlabel(r"$p_{+}$")
+    ax.set_xlim(0,1)
     ax.legend()
 ```
 
@@ -253,6 +255,9 @@ data[data["method"] == "face to face"]["sondage"].value_counts()
 data[data["sondage"] == "Ifop"]["method"].value_counts()
 ```
 
+Let us note already that since not every pollster use every method we may need to model the pairs `(pollster,method)` rather than pollsters and methods individually.
+
+
 ## A more serious analysis of bias
 
 To investigate bias we now compute the rolling mean of the $p_{approve}$ values and compare each method's and pollster's deviation from the mean.
@@ -285,6 +290,7 @@ for ax, (pollster, vals) in zip(axes.ravel(), pollster_vals.items()):
     ax.hist(vals, alpha=0.3, color=c, label=pollster)
     ax.axvline(x=np.mean(vals), color=c, linestyle="--")
     ax.axvline(x=0, color="black")
+    ax.set_xlim(-.3, .3)
     ax.legend()
 
 plt.xlabel(r"$p_{approve} - \bar{p}_{approve}$", fontsize=25);
@@ -307,25 +313,15 @@ for method, vals in method_vals.items():
     ax.axvline(x=np.mean(vals), color=c, linestyle="--")
 
 ax.axvline(x=0, color="black")
+ax.set_xlim(-.2, .2)
 ax.set_xlabel(r"$p_+ - \bar{p}_{+}$", fontsize=25)
 ax.legend();
 ```
 
-## Todo
+Face-to-face polls seems to give systematically below-average approval rates.
 
-### Bias
 
-There are many things worth exploring before moving on to modeling. First, bias:
-
-- Bias by method: does one method tend to produce higher approval rates? More non-response?
-
-- We can use the rolling average by method/pollster and look at the distribution of the difference between values and the average per method/pollster.
-
-### Variance
-
-Look at a rolling estimate of the variance of approval rates.
-
-### Trend
+### TODO: Trend
 
 Look at the successive difference of the average approval rate. Is there a trend
 here?
@@ -383,9 +379,6 @@ We can only estimate the bias for internet and phone, not for face-to-face and p
 Each observation is uniquely identified by `(pollster, field_date)`:
 
 ```python
-# for coords and indexing
-#pollster_id, pollsters = data["sondage"].factorize(sort=True)
-#method_id, methods = data["method"].factorize(sort=True)
 pollster_by_method_id, pollster_by_methods = data.set_index(["sondage", "method"]).index.factorize(sort=True)
 month_id = np.hstack(
     [
@@ -400,8 +393,6 @@ months = np.arange(max(month_id) + 1)
 
 ```python
 COORDS = {
-    #"pollster": pollsters,
-    #"method": methods,
     "pollster_by_method": pollster_by_methods,
     "month": months,
     "observation": data.set_index(["sondage", "field_date"]).index,
@@ -448,22 +439,16 @@ az.summary(idata, round_to=2, var_names=["~popularity"])
 ```
 
 ```python
-mean_pollster_bias = (
+mean_bias = (
     idata.posterior["bias"].mean(("chain", "draw")).to_dataframe()
 )
-mean_pollster_bias.round(2)
+mean_bias.round(2)
 ```
 
 ```python
-ax = mean_pollster_bias.plot.bar(figsize=(14, 8), rot=30)
-ax.set_title("$>0$ bias means pollster overestimates true popularity");
+ax = mean_bias.plot.bar(figsize=(14, 8), rot=30)
+ax.set_title("$>0$ bias means (pollster, method) overestimates the latent popularity");
 ```
-
-### TODO: Interpret and compare to data
-
-There is a strong discrepancy for Kantar between what we observe and what the model returns. We saw earlier that all face-to-face polls were from Kantar. The bias may thus be fully captured by the face-to-face interaction. It is almost a philosophical question here whether the bias is due to the method or to the pollster, and this region of the posterior is weakly identified by the data so the coefficients corresponding to Kantar and face-to-face should not be interpreted separately.
-
-On the other hand, the posterior coefficients for the method bias agree with our observation of the data. In other words, the model has decided, Kantar does nothing special: it considers the negative bias is all due to face-to-face :D
 
 We now plot the posterior values of `mu`. Since the model is completely pooled, we only have 60 values, which correspond to a full term:
 
@@ -485,10 +470,6 @@ ax.set_xlabel("Months into term");
 
 ```python
 hdi_data = az.hdi(logistic(idata.posterior["mu"]))
-hdi_data
-```
-
-```python
 ax = az.plot_hdi(idata.posterior.coords["month"], hdi_data=hdi_data)
 ax.vlines(idata.posterior.coords["month"], hdi_data.sel(hdi="lower")["mu"], hdi_data.sel(hdi="higher")["mu"])
 post_pop.median("sample").plot(ax=ax);
@@ -498,7 +479,7 @@ post_pop.median("sample").plot(ax=ax);
 az.plot_posterior(logistic(idata.posterior["mu"].sel(month=42)));
 ```
 
-### Infer `mu` of GRW
+### Infer the standard deviation $\sigma$ of the random walk
 
 ```python
 with pm.Model(coords=COORDS) as pooled_popularity:
@@ -550,7 +531,22 @@ ax.set_ylabel("Popularity")
 ax.set_xlabel("Months into term");
 ```
 
-### Model overdispersion of polls
+```python
+hdi_data = az.hdi(logistic(idata.posterior["mu"]))
+ax = az.plot_hdi(idata.posterior.coords["month"], hdi_data=hdi_data)
+ax.vlines(idata.posterior.coords["month"], hdi_data.sel(hdi="lower")["mu"], hdi_data.sel(hdi="higher")["mu"])
+post_pop.median("sample").plot(ax=ax);
+```
+
+The posterior variance of the values of $\mu$ looks grossly underestimated; between month 40 and 50 presidents have had popularity rates between .2 nd .4 while here the popularity is estimated aournd .21 plus or minus .02 at best. We need to fhix this.
+
+
+### A model that accounts for the overdispersion of polls
+
+
+As we saw with the previous model, the variance of $\mu$'s posterior values is grossly underestimated. This suggests that the variance in the obervations is not only due to variations in the mean value, $p_{approve}$. Indeed, there is variance in the results that probably cannot be accounted for by the pollsters' and method's biais and has more something to do with measurement errors, or other factors we did not include.
+
+We use a Beta-Binomial model to add one degree of liberty and allow the variance to be estimated independantly from the mean value.
 
 ```python
 with pm.Model(coords=COORDS) as pooled_popularity:
@@ -605,6 +601,16 @@ post_pop.mean("sample").plot(ax=ax, color="orange", lw=2)
 ax.set_ylabel("Popularity")
 ax.set_xlabel("Months into term");
 ```
+
+```python
+hdi_data = az.hdi(logistic(idata.posterior["mu"]))
+ax = az.plot_hdi(idata.posterior.coords["month"], hdi_data=hdi_data)
+ax.vlines(idata.posterior.coords["month"], hdi_data.sel(hdi="lower")["mu"], hdi_data.sel(hdi="higher")["mu"])
+post_pop.median("sample").plot(ax=ax);
+```
+
+This is much better! It is unlikely we would be able to do much better than this for the unpooled model; maybe by having one dispersion term per term/month. But since we wish to switch to a partially pooled model for $\mu$ we will stop our investigation on the fully pooled model for now.
+
 
 ### Hierarchical model
 
@@ -674,19 +680,11 @@ ax.set_xlabel("Months into term");
 
 ## TODO
 
-- Model an interaction between method and pollster.
-
 - Posterior predictive analysis: distribution of $p_{\mathrm{approve}}$ for each pollster and method. We can plot the approval rates for each poll for each president but we do not except anything to come from it because we mixed all the terms (although we may see a difference due to new pollsters appearing).
 
 - Re-read the paper by Gellman et al. on predicting the US presidential election. We may be able to catch something new given our experience with this first model.
 
 - Try out-of-sample popularity prediction.
-
-- Test the sensitivity to $\sigma$ in the random walk.
-
-- Learn $\sigma$ from data?
-
-The natural next step is partial pooling for the values of `mu`
 
 ```python
 %load_ext watermark
