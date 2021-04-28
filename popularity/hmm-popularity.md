@@ -6,11 +6,11 @@ jupyter:
       extension: .md
       format_name: markdown
       format_version: '1.3'
-      jupytext_version: 1.11.1
+      jupytext_version: 1.11.0
   kernelspec:
-    display_name: elections-models
+    display_name: pollposition
     language: python
-    name: elections-models
+    name: pollposition
 ---
 
 # French presidents' popularity
