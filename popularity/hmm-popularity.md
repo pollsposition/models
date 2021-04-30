@@ -6,11 +6,11 @@ jupyter:
       extension: .md
       format_name: markdown
       format_version: '1.3'
-      jupytext_version: 1.11.0
+      jupytext_version: 1.11.1
   kernelspec:
-    display_name: pollposition
+    display_name: elections-models
     language: python
-    name: pollposition
+    name: elections-models
 ---
 
 # French presidents' popularity
@@ -620,21 +620,37 @@ COORDS["president"] = presidents
 ```
 
 ```python
+COORDS["month_truncated"] = COORDS["month"][1:]
+```
+
+```python
+COORDS["month"]
+```
+
+```python
+np.unique(month_id)
+```
+
+```python
 with pm.Model(coords=COORDS) as hierarchical_popularity:
     
     bias = pm.Normal("bias", 0, 0.15, dims="pollster_by_method")
     
+    mean_monthly_pop = pm.Normal("mean_monthly_pop", 0, 0.15, shape=61)
+    print(f"{mean_monthly_pop.tag.test_value.shape = }")
     #sigma_mu = pm.HalfNormal("sigma_mu", 0.5)
-    sigma_mu = pm.Gamma("ls_trend", alpha=20, beta=1)
-    mu = pm.GaussianRandomWalk("mu", sigma=sigma_mu, dims=("president", "month"))
+    hyper_sigma = pm.Gamma("hyper_sigma", alpha=20, beta=1)
+    monthly_pop = pm.GaussianRandomWalk("monthly_pop", mu=mean_monthly_pop, sigma=hyper_sigma, dims=("president", "month"))
+    print(f"{monthly_pop.tag.test_value.shape = }")
 
     popularity = pm.Deterministic(
         "popularity",
         pm.math.invlogit(
-             mu[president_id, month_id] + bias[pollster_by_method_id]
+             monthly_pop[president_id, month_id] + bias[pollster_by_method_id]
         ),
         dims="observation",
     )
+    print(f"{popularity.tag.test_value.shape = }")
 
     N_approve = pm.Binomial(
         "N_approve",
