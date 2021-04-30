@@ -23,7 +23,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 import pymc3 as pm
-import theano.tensor as tt
+import theano.tensor as aet
 from scipy.special import expit as logistic
 ```
 
@@ -53,7 +53,9 @@ print(comment)
 
 ```python
 # need to confirm if we wanna do that
-data.loc[(data.sondage == 'Kantar') & (data.method == "internet"), "method"] = "face to face"
+data.loc[
+    (data.sondage == "Kantar") & (data.method == "internet"), "method"
+] = "face to face"
 ```
 
 Let us look at simple stats on the pollsters. First the total number of polls they've produced:
@@ -143,7 +145,7 @@ for method, vals in method_vals.items():
     ax.hist(vals, alpha=0.3, color=c, label=method)
     ax.axvline(x=np.mean(vals), color=c, linestyle="--")
 
-ax.set_xlim(0,1)
+ax.set_xlim(0, 1)
 ax.set_xlabel(r"$p_{+}$")
 ax.legend();
 ```
@@ -169,7 +171,7 @@ for ax, (pollster, vals) in zip(axes.ravel(), pollster_vals.items()):
     ax.hist(vals, alpha=0.3, color=c, label=pollster)
     ax.axvline(x=np.mean(vals), color=c, linestyle="--")
     ax.set_xlabel(r"$p_{+}$")
-    ax.set_xlim(0,1)
+    ax.set_xlim(0, 1)
     ax.legend()
 ```
 
@@ -290,7 +292,7 @@ for ax, (pollster, vals) in zip(axes.ravel(), pollster_vals.items()):
     ax.hist(vals, alpha=0.3, color=c, label=pollster)
     ax.axvline(x=np.mean(vals), color=c, linestyle="--")
     ax.axvline(x=0, color="black")
-    ax.set_xlim(-.3, .3)
+    ax.set_xlim(-0.3, 0.3)
     ax.legend()
 
 plt.xlabel(r"$p_{approve} - \bar{p}_{approve}$", fontsize=25);
@@ -313,7 +315,7 @@ for method, vals in method_vals.items():
     ax.axvline(x=np.mean(vals), color=c, linestyle="--")
 
 ax.axvline(x=0, color="black")
-ax.set_xlim(-.2, .2)
+ax.set_xlim(-0.2, 0.2)
 ax.set_xlabel(r"$p_+ - \bar{p}_{+}$", fontsize=25)
 ax.legend();
 ```
@@ -379,7 +381,9 @@ We can only estimate the bias for internet and phone, not for face-to-face and p
 Each observation is uniquely identified by `(pollster, field_date)`:
 
 ```python
-pollster_by_method_id, pollster_by_methods = data.set_index(["sondage", "method"]).index.factorize(sort=True)
+pollster_by_method_id, pollster_by_methods = data.set_index(
+    ["sondage", "method"]
+).index.factorize(sort=True)
 month_id = np.hstack(
     [
         pd.Categorical(
@@ -405,7 +409,7 @@ COORDS = {
 with pm.Model(coords=COORDS) as pooled_popularity:
 
     bias = pm.Normal("bias", 0, 0.15, dims="pollster_by_method")
-    mu = pm.GaussianRandomWalk("mu", sigma=1., dims="month")
+    mu = pm.GaussianRandomWalk("mu", sigma=1.0, dims="month")
 
     popularity = pm.Deterministic(
         "popularity",
@@ -422,7 +426,7 @@ with pm.Model(coords=COORDS) as pooled_popularity:
         observed=data["num_approve"],
         dims="observation",
     )
-    
+
     idata = pm.sample(return_inferencedata=True)
 ```
 
@@ -439,9 +443,7 @@ az.summary(idata, round_to=2, var_names=["~popularity"])
 ```
 
 ```python
-mean_bias = (
-    idata.posterior["bias"].mean(("chain", "draw")).to_dataframe()
-)
+mean_bias = idata.posterior["bias"].mean(("chain", "draw")).to_dataframe()
 mean_bias.round(2)
 ```
 
@@ -471,7 +473,11 @@ ax.set_xlabel("Months into term");
 ```python
 hdi_data = az.hdi(logistic(idata.posterior["mu"]))
 ax = az.plot_hdi(idata.posterior.coords["month"], hdi_data=hdi_data)
-ax.vlines(idata.posterior.coords["month"], hdi_data.sel(hdi="lower")["mu"], hdi_data.sel(hdi="higher")["mu"])
+ax.vlines(
+    idata.posterior.coords["month"],
+    hdi_data.sel(hdi="lower")["mu"],
+    hdi_data.sel(hdi="higher")["mu"],
+)
 post_pop.median("sample").plot(ax=ax);
 ```
 
@@ -490,9 +496,7 @@ with pm.Model(coords=COORDS) as pooled_popularity:
 
     popularity = pm.Deterministic(
         "popularity",
-        pm.math.invlogit(
-            mu[month_id] + bias[pollster_by_method_id]
-        ),
+        pm.math.invlogit(mu[month_id] + bias[pollster_by_method_id]),
         dims="observation",
     )
 
@@ -503,7 +507,7 @@ with pm.Model(coords=COORDS) as pooled_popularity:
         observed=data["num_approve"],
         dims="observation",
     )
-    
+
     idata = pm.sample(tune=2000, draws=2000, return_inferencedata=True)
 ```
 
@@ -534,7 +538,11 @@ ax.set_xlabel("Months into term");
 ```python
 hdi_data = az.hdi(logistic(idata.posterior["mu"]))
 ax = az.plot_hdi(idata.posterior.coords["month"], hdi_data=hdi_data)
-ax.vlines(idata.posterior.coords["month"], hdi_data.sel(hdi="lower")["mu"], hdi_data.sel(hdi="higher")["mu"])
+ax.vlines(
+    idata.posterior.coords["month"],
+    hdi_data.sel(hdi="lower")["mu"],
+    hdi_data.sel(hdi="higher")["mu"],
+)
 post_pop.median("sample").plot(ax=ax);
 ```
 
@@ -550,16 +558,14 @@ We use a Beta-Binomial model to add one degree of liberty and allow the variance
 
 ```python
 with pm.Model(coords=COORDS) as pooled_popularity:
-    
+
     bias = pm.Normal("bias", 0, 0.15, dims="pollster_by_method")
     sigma_mu = pm.HalfNormal("sigma_mu", 0.5)
     mu = pm.GaussianRandomWalk("mu", sigma=sigma_mu, dims="month")
 
     popularity = pm.Deterministic(
         "popularity",
-        pm.math.invlogit(
-            mu[month_id] + bias[pollster_by_method_id]
-        ),
+        pm.math.invlogit(mu[month_id] + bias[pollster_by_method_id]),
         dims="observation",
     )
 
@@ -574,7 +580,7 @@ with pm.Model(coords=COORDS) as pooled_popularity:
         observed=data["num_approve"],
         dims="observation",
     )
-    
+
     idata = pm.sample(tune=2000, draws=2000, return_inferencedata=True)
 ```
 
@@ -605,7 +611,11 @@ ax.set_xlabel("Months into term");
 ```python
 hdi_data = az.hdi(logistic(idata.posterior["mu"]))
 ax = az.plot_hdi(idata.posterior.coords["month"], hdi_data=hdi_data)
-ax.vlines(idata.posterior.coords["month"], hdi_data.sel(hdi="lower")["mu"], hdi_data.sel(hdi="higher")["mu"])
+ax.vlines(
+    idata.posterior.coords["month"],
+    hdi_data.sel(hdi="lower")["mu"],
+    hdi_data.sel(hdi="higher")["mu"],
+)
 post_pop.median("sample").plot(ax=ax);
 ```
 
@@ -620,37 +630,95 @@ COORDS["president"] = presidents
 ```
 
 ```python
-COORDS["month_truncated"] = COORDS["month"][1:]
-```
+from typing import *
 
-```python
-COORDS["month"]
-```
 
-```python
-np.unique(month_id)
+def ZeroSumNormal(
+    name: str,
+    sigma: Optional[float] = None,
+    *,
+    dims: Union[str, Tuple[str]],
+    model: Optional[pm.Model] = None,
+):
+    """
+    Multivariate normal, such that sum(x, axis=-1) = 0.
+
+    Parameters
+    ----------
+    name: str
+        String name representation of the PyMC variable.
+    sigma: Optional[float], defaults to None
+        Scale for the Normal distribution. If ``None``, a standard Normal is used.
+    dims: Union[str, Tuple[str]]
+        Dimension names for the shape of the distribution.
+        See https://docs.pymc.io/pymc-examples/examples/pymc3_howto/data_container.html for an example.
+    model: Optional[pm.Model], defaults to None
+        PyMC model instance. If ``None``, a model instance is created.
+    """
+    if isinstance(dims, str):
+        dims = (dims,)
+
+    model = pm.modelcontext(model)
+    *dims_pre, dim = dims
+    dim_trunc = f"{dim}_truncated_"
+    (shape,) = model.shape_from_dims((dim,))
+    assert shape >= 1
+
+    model.add_coords({f"{dim}_truncated_": pd.RangeIndex(shape - 1)})
+    raw = pm.Normal(
+        f"{name}_truncated_", dims=tuple(dims_pre) + (dim_trunc,), sigma=sigma
+    )
+    Q = make_sum_zero_hh(shape)
+    draws = aet.dot(raw, Q[:, 1:].T)
+
+    # if sigma is not None:
+    #    draws = sigma * draws
+
+    return pm.Deterministic(name, draws, dims=dims)
+
+
+def make_sum_zero_hh(N: int) -> np.ndarray:
+    """
+    Build a householder transformation matrix that maps e_1 to a vector of all 1s.
+    """
+    e_1 = np.zeros(N)
+    e_1[0] = 1
+    a = np.ones(N)
+    a /= np.sqrt(a @ a)
+    v = a + e_1
+    v /= np.sqrt(v @ v)
+    return np.eye(N) - 2 * np.outer(v, v)
 ```
 
 ```python
 with pm.Model(coords=COORDS) as hierarchical_popularity:
+
+    baseline = pm.Normal("baseline")
+    president_effect = ZeroSumNormal("president_effect", sigma=0.15, dims="president")
+    month_effect = ZeroSumNormal("month_effect", sigma=0.15, dims="month") # estimate with a GRW too?
+    house_effect = ZeroSumNormal("house_effect", sigma=0.15, dims="pollster_by_method")
+    # try to add a method coeff
+    # + method_bias[method_id]
     
-    bias = pm.Normal("bias", 0, 0.15, dims="pollster_by_method")
-    
-    mean_monthly_pop = pm.Normal("mean_monthly_pop", 0, 0.15, shape=61)
-    print(f"{mean_monthly_pop.tag.test_value.shape = }")
-    #sigma_mu = pm.HalfNormal("sigma_mu", 0.5)
-    hyper_sigma = pm.Gamma("hyper_sigma", alpha=20, beta=1)
-    monthly_pop = pm.GaussianRandomWalk("monthly_pop", mu=mean_monthly_pop, sigma=hyper_sigma, dims=("president", "month"))
-    print(f"{monthly_pop.tag.test_value.shape = }")
+    sd = pm.HalfNormal("sigma_pop", 0.5)
+    # try this with the cumsum approach, to properly control the init
+    # try with a GP
+    raw = pm.GaussianRandomWalk(
+        "month_president_raw", sigma=1.0, dims=("president", "month"), init=pm.Normal.dist(sigma=0.01)
+    )
+    month_president_effect = pm.Deterministic("month_president_effect", raw * sd, dims=("president", "month"))
 
     popularity = pm.Deterministic(
         "popularity",
         pm.math.invlogit(
-             monthly_pop[president_id, month_id] + bias[pollster_by_method_id]
+            baseline
+            + president_effect[president_id]
+            + month_effect[month_id]
+            + month_president_effect[president_id, month_id]
+            + house_effect[pollster_by_method_id]
         ),
         dims="observation",
     )
-    print(f"{popularity.tag.test_value.shape = }")
 
     N_approve = pm.Binomial(
         "N_approve",
@@ -659,10 +727,7 @@ with pm.Model(coords=COORDS) as hierarchical_popularity:
         observed=data["num_approve"],
         dims="observation",
     )
-```
-
-```python
-hierarchical_popularity.check_test_point()
+pm.model_to_graphviz(hierarchical_popularity)
 ```
 
 ```python
@@ -676,6 +741,14 @@ az.plot_trace(idata, var_names=["~popularity"], compact=True);
 
 ```python
 az.summary(idata, round_to=2, var_names=["~popularity"])
+```
+
+```python
+idata.posterior.isel(month=0).plot.scatter("month_president_raw", "baseline", hue="president");
+```
+
+```python
+idata.posterior.isel(month=0).plot.scatter("baseline", "president_effect", hue="president");
 ```
 
 ```python
