@@ -736,11 +736,11 @@ with hierarchical_popularity:
 ```
 
 ```python
-az.plot_trace(idata, var_names=["~popularity"], compact=True);
+az.plot_trace(idata, var_names=["~popularity", "~truncated"], filter_vars="regex", compact=True);
 ```
 
 ```python
-az.summary(idata, round_to=2, var_names=["~popularity"])
+az.summary(idata, round_to=2, var_names=["~popularity", "~truncated"], filter_vars="regex")
 ```
 
 ```python
