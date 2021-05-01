@@ -51,13 +51,6 @@ There are {len(pollsters)} pollsters: {', '.join(list(pollsters))}
 print(comment)
 ```
 
-```python
-# need to confirm if we wanna do that
-data.loc[
-    (data.sondage == "Kantar") & (data.method == "internet"), "method"
-] = "face to face"
-```
-
 Let us look at simple stats on the pollsters. First the total number of polls they've produced:
 
 ```python
@@ -691,6 +684,10 @@ def make_sum_zero_hh(N: int) -> np.ndarray:
 ```
 
 ```python
+COORDS["month_minus_origin"] = COORDS["month"][1:]
+```
+
+```python
 with pm.Model(coords=COORDS) as hierarchical_popularity:
 
     baseline = pm.Normal("baseline")
@@ -700,13 +697,28 @@ with pm.Model(coords=COORDS) as hierarchical_popularity:
     # try to add a method coeff
     # + method_bias[method_id]
     
-    sd = pm.HalfNormal("sigma_pop", 0.5)
-    # try this with the cumsum approach, to properly control the init
+    sd = pm.HalfNormal("sigma_pop", 0.2)
     # try with a GP
-    raw = pm.GaussianRandomWalk(
-        "month_president_raw", sigma=1.0, dims=("president", "month"), init=pm.Normal.dist(sigma=0.01)
+    #raw = pm.GaussianRandomWalk(
+     #   "month_president_raw", sigma=1.0, init=pm.Normal.dist(sigma=0.01), dims=("president", "month")
+    #)
+    # try this with the cumsum approach, to properly control the init
+ #   rw_init = pm.Normal(
+#        "rw_init", mu=0.0, sigma=0.01, dims="president"
+  #  )
+    rw_init = aet.zeros(shape=(len(COORDS["president"]), 1))
+    rw_innovations = pm.Normal(
+        "rw_innovations",
+        sigma=1.0, 
+        dims=("president", "month_minus_origin"),
     )
+    print(f"{rw_innovations.tag.test_value.shape = }")
+    raw = aet.cumsum(
+        aet.concatenate([rw_init, rw_innovations], axis=-1), axis=-1
+    )
+    print(f"{raw.tag.test_value.shape = }")
     month_president_effect = pm.Deterministic("month_president_effect", raw * sd, dims=("president", "month"))
+    print(f"{month_president_effect.tag.test_value.shape = }")
 
     popularity = pm.Deterministic(
         "popularity",
@@ -736,19 +748,11 @@ with hierarchical_popularity:
 ```
 
 ```python
-az.plot_trace(idata, var_names=["~popularity", "~truncated"], filter_vars="regex", compact=True);
+az.plot_trace(idata, var_names=["~popularity", "~truncated", "~rw_innovations"], filter_vars="regex", compact=True);
 ```
 
 ```python
-az.summary(idata, round_to=2, var_names=["~popularity", "~truncated"], filter_vars="regex")
-```
-
-```python
-idata.posterior.isel(month=0).plot.scatter("month_president_raw", "baseline", hue="president");
-```
-
-```python
-idata.posterior.isel(month=0).plot.scatter("baseline", "president_effect", hue="president");
+az.summary(idata, round_to=2, var_names=["~popularity", "~truncated", "~rw_innovations"], filter_vars="regex")
 ```
 
 ```python
