@@ -406,9 +406,7 @@ with pm.Model(coords=COORDS) as pooled_popularity:
 
     popularity = pm.Deterministic(
         "popularity",
-        pm.math.invlogit(
-            mu[month_id] + bias[pollster_by_method_id]
-        ),
+        pm.math.invlogit(mu[month_id] + bias[pollster_by_method_id]),
         dims="observation",
     )
 
@@ -620,6 +618,7 @@ This is much better! It is unlikely we would be able to do much better than this
 ```python
 president_id, presidents = data["president"].factorize(sort=False)
 COORDS["president"] = presidents
+COORDS["month_minus_origin"] = COORDS["month"][1:]
 ```
 
 ```python
@@ -684,41 +683,29 @@ def make_sum_zero_hh(N: int) -> np.ndarray:
 ```
 
 ```python
-COORDS["month_minus_origin"] = COORDS["month"][1:]
-```
-
-```python
 with pm.Model(coords=COORDS) as hierarchical_popularity:
 
     baseline = pm.Normal("baseline")
     president_effect = ZeroSumNormal("president_effect", sigma=0.15, dims="president")
-    month_effect = ZeroSumNormal("month_effect", sigma=0.15, dims="month") # estimate with a GRW too?
+    month_effect = ZeroSumNormal(
+        "month_effect", sigma=0.15, dims="month"
+    )  # estimate with a GRW too?
     house_effect = ZeroSumNormal("house_effect", sigma=0.15, dims="pollster_by_method")
     # try to add a method coeff
     # + method_bias[method_id]
-    
-    sd = pm.HalfNormal("sigma_pop", 0.2)
+
     # try with a GP
-    #raw = pm.GaussianRandomWalk(
-     #   "month_president_raw", sigma=1.0, init=pm.Normal.dist(sigma=0.01), dims=("president", "month")
-    #)
-    # try this with the cumsum approach, to properly control the init
- #   rw_init = pm.Normal(
-#        "rw_init", mu=0.0, sigma=0.01, dims="president"
-  #  )
+    # need the cumsum parametrization to properly control the init of the GRW
     rw_init = aet.zeros(shape=(len(COORDS["president"]), 1))
     rw_innovations = pm.Normal(
         "rw_innovations",
-        sigma=1.0, 
         dims=("president", "month_minus_origin"),
     )
-    print(f"{rw_innovations.tag.test_value.shape = }")
-    raw = aet.cumsum(
-        aet.concatenate([rw_init, rw_innovations], axis=-1), axis=-1
+    raw_rw = aet.cumsum(aet.concatenate([rw_init, rw_innovations], axis=-1), axis=-1)
+    sd = pm.HalfNormal("shrinkage_pop", 0.2)
+    month_president_effect = pm.Deterministic(
+        "month_president_effect", raw_rw * sd, dims=("president", "month")
     )
-    print(f"{raw.tag.test_value.shape = }")
-    month_president_effect = pm.Deterministic("month_president_effect", raw * sd, dims=("president", "month"))
-    print(f"{month_president_effect.tag.test_value.shape = }")
 
     popularity = pm.Deterministic(
         "popularity",
@@ -748,27 +735,48 @@ with hierarchical_popularity:
 ```
 
 ```python
-az.plot_trace(idata, var_names=["~popularity", "~truncated", "~rw_innovations"], filter_vars="regex", compact=True);
+az.plot_trace(
+    idata,
+    var_names=["~popularity", "~truncated", "~rw_innovations"],
+    filter_vars="regex",
+    compact=True,
+);
 ```
 
 ```python
-az.summary(idata, round_to=2, var_names=["~popularity", "~truncated", "~rw_innovations"], filter_vars="regex")
+az.summary(
+    idata,
+    round_to=2,
+    var_names=["~popularity", "~truncated", "~rw_innovations"],
+    filter_vars="regex",
+)
 ```
 
 ```python
-post_pop = logistic(idata.posterior["mu"].stack(sample=("chain", "draw")))
+fig, axes = plt.subplots(2, 2, figsize=(14, 7), sharex=True, sharey=True)
 
-fig, ax = plt.subplots()
-for i in np.random.choice(post_pop.coords["sample"].size, size=1000):
+for ax, p in zip(axes.ravel(), idata.posterior.coords["president"]):
+    post = idata.posterior.sel(president=p)
+    post_pop = logistic(
+        (
+            post["baseline"]
+            + post["president_effect"]
+            + post["month_effect"]
+            + post["month_president_effect"]
+        ).stack(sample=("chain", "draw"))
+    )
+    post_pop = post_pop.isel(sample=np.random.choice(post_pop.coords["sample"].size, size=1000))
     ax.plot(
-        idata.posterior.coords["month"],
-        post_pop.isel(sample=i),
+        post.coords["month"],
+        post_pop,
         alpha=0.01,
         color="blue",
+        label=p
     )
-post_pop.mean("sample").plot(ax=ax, color="orange", lw=2)
-ax.set_ylabel("Popularity")
-ax.set_xlabel("Months into term");
+    post_pop.median("sample").plot(ax=ax, color="orange", alpha=0.8, lw=2, label="Median")
+    ax.set_ylabel("Latent popularity")
+    ax.set_xlabel("Months into term")
+plt.savefig("ppc");
 ```
 
 ## TODO
