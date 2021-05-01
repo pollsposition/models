@@ -719,9 +719,21 @@ with pm.Model(coords=COORDS) as hierarchical_popularity:
         dims="observation",
     )
 
-    N_approve = pm.Binomial(
+    #N_approve = pm.Binomial(
+     #   "N_approve",
+      #  p=popularity,
+       # n=data["samplesize"],
+        #observed=data["num_approve"],
+        #dims="observation",
+    #)
+    
+    # overdispersion parameter
+    theta = pm.Exponential("theta_offset", 1.0) + 10.0
+
+    N_approve = pm.BetaBinomial(
         "N_approve",
-        p=popularity,
+        alpha=popularity * theta,
+        beta=(1.0 - popularity) * theta,
         n=data["samplesize"],
         observed=data["num_approve"],
         dims="observation",
