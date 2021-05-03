@@ -543,9 +543,9 @@ The posterior variance of the values of $\mu$ looks grossly underestimated; betw
 ### A model that accounts for the overdispersion of polls
 
 
-As we saw with the previous model, the variance of $\mu$'s posterior values is grossly underestimated. This suggests that the variance in the obervations is not only due to variations in the mean value, $p_{approve}$. Indeed, there is variance in the results that probably cannot be accounted for by the pollsters' and method's biais and has more something to do with measurement errors, or other factors we did not include.
+As we saw with the previous model, the variance of $\mu$'s posterior values is grossly underestimated. This suggests that the variance in the obervations is not only due to variations in the mean value, $p_{approve}$. Indeed, there is variance in the results that probably cannot be accounted for by the pollsters' and method's biases and has more something to do with measurement errors, or other factors we did not include.
 
-We use a Beta-Binomial model to add one degree of liberty and allow the variance to be estimated independantly from the mean value.
+We use a Beta-Binomial model to add one degree of liberty and allow the variance to be estimated independently from the mean value:
 
 ```python
 with pm.Model(coords=COORDS) as pooled_popularity:
@@ -618,8 +618,165 @@ This is much better! It is unlikely we would be able to do much better than this
 ```python
 president_id, presidents = data["president"].factorize(sort=False)
 COORDS["president"] = presidents
+```
+
+```python
+with pm.Model(coords=COORDS) as hierarchical_popularity:
+    
+    house_effect = pm.Normal("house_effect", 0, 0.15, dims="pollster_by_method")
+    month_effect = pm.Normal("month_effect", 0, 0.15, shape=len(COORDS["month"]) + 1)
+    shrinkage_pop = pm.HalfNormal("shrinkage_pop", 0.2)
+    month_president_effect = pm.GaussianRandomWalk("month_president_effect", mu=month_effect, sigma=shrinkage_pop, dims=("president", "month"))
+
+    popularity = pm.Deterministic(
+        "popularity",
+        pm.math.invlogit(
+             month_president_effect[president_id, month_id] + house_effect[pollster_by_method_id]
+        ),
+        dims="observation",
+    )
+    
+    N_approve = pm.Binomial(
+        "N_approve",
+        p=popularity,
+        n=data["samplesize"],
+        observed=data["num_approve"],
+        dims="observation",
+    )
+```
+
+```python
+with hierarchical_popularity:
+    idata = pm.sample(return_inferencedata=True)
+```
+
+Mmmh, that doesn't sample because we get zero derivates for some variables... Let's check the model's test point:
+
+```python
+hierarchical_popularity.check_test_point()
+```
+
+Interesting: the problem doesn't come from a -inf test point or from missing values in the data -- the problem really comes from the model. A safe bet here is to try and reparametrize the model with a non-centered parametrization:
+
+```python
+with pm.Model(coords=COORDS) as hierarchical_popularity:
+    
+    house_effect = pm.Normal("house_effect", 0, 0.15, dims="pollster_by_method")
+    
+    month_effect = pm.Normal("month_effect", 0, 0.15, dims="month")
+    sd = pm.HalfNormal("shrinkage_pop", 0.2)
+    raw_rw = pm.GaussianRandomWalk("raw_rw", sigma=1., dims=("president", "month"))
+    month_president_effect = pm.Deterministic(
+        "month_president_effect", month_effect + raw_rw * sd, dims=("president", "month")
+    )
+
+    popularity = pm.Deterministic(
+        "popularity",
+        pm.math.invlogit(
+             month_president_effect[president_id, month_id] + house_effect[pollster_by_method_id]
+        ),
+        dims="observation",
+    )
+    
+    N_approve = pm.Binomial(
+        "N_approve",
+        p=popularity,
+        n=data["samplesize"],
+        observed=data["num_approve"],
+        dims="observation",
+    )
+    
+    idata = pm.sample(return_inferencedata=True)
+```
+
+So our sampling problem indeed came from a challenging geometry when the model was parametrized with the centered parametrization. Switching to a non-centered one fixed it. Now, do our estimates make sense?
+
+```python
+az.plot_trace(
+    idata,
+    var_names=["~popularity", "~rw"],
+    filter_vars="regex",
+);
+```
+
+That looks a bit weird right? `shrinkage_pop`, the random walk's standard deviation, seems really high! That's basically telling us that the president's popularity can change a lot from one month to another, which we now from domain knowledge is not true. The `month_effect` are all similar and centered on 0, which means all months are very similar -- there can't really be a bad month or a good month. 
+
+This is worrying for at least two reasons: 1) we _know_ from prior knowledge that there _are_ good and bad months for presidents; 2) this extreme similarity in `month_effect` directly contradicts the high `shrinkage_pop`: how can the standard deviation be so high if months are all the same?
+
+So something is missing here. Actually, we should really have an intercept, which represents the baseline presidential approval, no matter the month and president. The tricky thing here is that `pm.GaussianRandomWalk` uses [a distribution to initiate the random walk](https://docs.pymc.io/api/distributions/timeseries.html#pymc3.distributions.timeseries.GaussianRandomWalk). So, if we don't constrain it to zero, we will get an additive non-identifiability -- for each president and month, we'll have two intercepts, `baseline` and the initial value of the random walk. `pm.GaussianRandomWalk` only accepts distribution objects for the `init` kwarg though, so we have to implement the random walk by hand, i.e:
+
+$$\mu_n = \mu_{n - 1} + Z_n, \, with \, Z_n \sim Normal(0, 1) \, and \, \mu_0 = 0$$
+
+In other words, a Gaussian random walk is just a cumulative sum, where we add a sample from a standard Normal at each step ($Z_n$ here, which is called the innovation of the random walk).
+
+Finally, it's probably useful to add a `president_effect`: it's very probable that some presidents are just more popular than others, even when taking into account the cyclical temporal variations.
+
+Let's code that up!
+
+```python
 COORDS["month_minus_origin"] = COORDS["month"][1:]
 ```
+
+```python
+with pm.Model(coords=COORDS) as hierarchical_popularity:
+    
+    baseline = pm.Normal("baseline")
+    president_effect = pm.Normal("president_effect", sigma=0.15, dims="president")
+    house_effect = pm.Normal("house_effect", 0, 0.15, dims="pollster_by_method")
+
+    month_effect = pm.Normal("month_effect", 0, 0.15, dims="month")
+    # need the cumsum parametrization to properly control the init of the GRW
+    rw_init = aet.zeros(shape=(len(COORDS["president"]), 1))
+    rw_innovations = pm.Normal(
+        "rw_innovations",
+        dims=("president", "month_minus_origin"),
+    )
+    raw_rw = aet.cumsum(aet.concatenate([rw_init, rw_innovations], axis=-1), axis=-1)
+    sd = pm.HalfNormal("shrinkage_pop", 0.2)
+    month_president_effect = pm.Deterministic(
+        "month_president_effect", raw_rw * sd, dims=("president", "month")
+    )
+
+    popularity = pm.Deterministic(
+        "popularity",
+        pm.math.invlogit(
+            baseline
+            + president_effect[president_id]
+            + month_effect[month_id]
+            + month_president_effect[president_id, month_id]
+            + house_effect[pollster_by_method_id]
+        ),
+        dims="observation",
+    )
+    
+    N_approve = pm.Binomial(
+        "N_approve",
+        p=popularity,
+        n=data["samplesize"],
+        observed=data["num_approve"],
+        dims="observation",
+    )
+    
+    idata = pm.sample(return_inferencedata=True)
+```
+
+```python
+az.plot_trace(
+    idata,
+    var_names=["~popularity", "~rw"],
+    filter_vars="regex",
+);
+```
+
+That looks much better, doesn't it? Now we do see a difference in the different months, and the shrinkage standard deviation looks much more reasonable too, meaning that once we've accounted for the variation in popularity associated with the other effects, the different presidents' popularity isn't that different on a monthly basis -- i.e there _are_ cycles in popularity, no matter who the president is.
+
+We could stop there, but, for fun, let's improve this model even further by:
+
+1. Use a Beta-Binomial likelihood. We already saw in the completely pooled model that it improves fit and convergence a lot. Plus, it makes scientific sense: for a lot of reasons, each poll probably has a different true Binomial probability than all the other ones -- even when it comes from the same pollster; just think about measurement errors or the way the sample is different each time. Here, we parametrize the Beta-Binomial by its mean and precision, instead of the classical $\alpha$ and $\beta$ parameters. For more details about this distribution and parametrization, see [this blog post](https://alexandorra.github.io/pollsposition_blog/popularity/macron/gaussian%20processes/polls/2021/01/18/gp-popularity.html#Build-me-a-model).
+
+2. Make sure that our different effects sum to zero. Think about the month effect. It only makes sense in a relative sense: some months are better than average, some other are worse, but you can't have _only_ good months -- they'd be good compared to what? So we want to make sure that the average month effect is 0, while allowing each month to be better or worse than average if needed. To do that, we use a Normal distribution whose dimensions are constrained to sum to zero. In PyMC, we can use the `ZeroSumNormal` distribution, that [Adrian Seyboldt](https://github.com/aseyboldt) contributed and kindly shared with us.
+
+Ok, enough talking, let's code!
 
 ```python
 from typing import *
@@ -627,7 +784,7 @@ from typing import *
 
 def ZeroSumNormal(
     name: str,
-    sigma: Optional[float] = None,
+    sigma: float = 1.0,
     *,
     dims: Union[str, Tuple[str]],
     model: Optional[pm.Model] = None,
@@ -636,17 +793,21 @@ def ZeroSumNormal(
     Multivariate normal, such that sum(x, axis=-1) = 0.
 
     Parameters
-    ----------
+    
     name: str
         String name representation of the PyMC variable.
-    sigma: Optional[float], defaults to None
-        Scale for the Normal distribution. If ``None``, a standard Normal is used.
+    sigma: float, defaults to 1
+        Scale for the Normal distribution. If none is provided, a standard Normal is used.
     dims: Union[str, Tuple[str]]
         Dimension names for the shape of the distribution.
         See https://docs.pymc.io/pymc-examples/examples/pymc3_howto/data_container.html for an example.
     model: Optional[pm.Model], defaults to None
         PyMC model instance. If ``None``, a model instance is created.
-    """
+    
+    Notes
+    ----------
+    Contributed by Adrian Seyboldt (@aseyboldt).
+    """ 
     if isinstance(dims, str):
         dims = (dims,)
 
@@ -662,9 +823,6 @@ def ZeroSumNormal(
     )
     Q = make_sum_zero_hh(shape)
     draws = aet.dot(raw, Q[:, 1:].T)
-
-    # if sigma is not None:
-    #    draws = sigma * draws
 
     return pm.Deterministic(name, draws, dims=dims)
 
@@ -687,14 +845,9 @@ with pm.Model(coords=COORDS) as hierarchical_popularity:
 
     baseline = pm.Normal("baseline")
     president_effect = ZeroSumNormal("president_effect", sigma=0.15, dims="president")
-    month_effect = ZeroSumNormal(
-        "month_effect", sigma=0.15, dims="month"
-    )  # estimate with a GRW too?
     house_effect = ZeroSumNormal("house_effect", sigma=0.15, dims="pollster_by_method")
-    # try to add a method coeff
-    # + method_bias[method_id]
-
-    # try with a GP
+    month_effect = ZeroSumNormal("month_effect", sigma=0.15, dims="month")
+    
     # need the cumsum parametrization to properly control the init of the GRW
     rw_init = aet.zeros(shape=(len(COORDS["president"]), 1))
     rw_innovations = pm.Normal(
@@ -719,14 +872,6 @@ with pm.Model(coords=COORDS) as hierarchical_popularity:
         dims="observation",
     )
 
-    #N_approve = pm.Binomial(
-     #   "N_approve",
-      #  p=popularity,
-       # n=data["samplesize"],
-        #observed=data["num_approve"],
-        #dims="observation",
-    #)
-    
     # overdispersion parameter
     theta = pm.Exponential("theta_offset", 1.0) + 10.0
 
@@ -765,6 +910,18 @@ az.summary(
 ```
 
 ```python
+mean_house_effect = (
+    idata.posterior["house_effect"].mean(("chain", "draw")).to_dataframe()
+)
+mean_house_effect.round(2)
+```
+
+```python
+ax = mean_house_effect.plot.bar(figsize=(14, 8), rot=30)
+ax.set_title("$>0$ bias means (pollster, method) overestimates the latent popularity");
+```
+
+```python
 fig, axes = plt.subplots(2, 2, figsize=(14, 7), sharex=True, sharey=True)
 
 for ax, p in zip(axes.ravel(), idata.posterior.coords["president"]):
@@ -777,27 +934,26 @@ for ax, p in zip(axes.ravel(), idata.posterior.coords["president"]):
             + post["month_president_effect"]
         ).stack(sample=("chain", "draw"))
     )
-    post_pop = post_pop.isel(sample=np.random.choice(post_pop.coords["sample"].size, size=1000))
-    ax.plot(
-        post.coords["month"],
-        post_pop,
-        alpha=0.01,
-        color="blue",
-        label=p
+    post_pop = post_pop.isel(
+        sample=np.random.choice(post_pop.coords["sample"].size, size=1000)
     )
-    post_pop.median("sample").plot(ax=ax, color="orange", alpha=0.8, lw=2, label="Median")
+    ax.plot(post.coords["month"], post_pop, alpha=0.01, color="blue", label=p)
+    post_pop.median("sample").plot(
+        ax=ax, color="orange", alpha=0.8, lw=2, label="Median"
+    )
     ax.set_ylabel("Latent popularity")
     ax.set_xlabel("Months into term")
-plt.savefig("ppc");
 ```
 
 ## TODO
 
-- Posterior predictive analysis: distribution of $p_{\mathrm{approve}}$ for each pollster and method. We can plot the approval rates for each poll for each president but we do not except anything to come from it because we mixed all the terms (although we may see a difference due to new pollsters appearing).
+- Posterior predictive analysis: distribution of $p_{\mathrm{approve}}$ for each pollster and method. We can plot the approval rates for each poll for each president.
 
 - Re-read the paper by Gellman et al. on predicting the US presidential election. We may be able to catch something new given our experience with this first model.
 
-- Try out-of-sample popularity prediction.
+- Estimate `month_effect` with a GRW too? This could be easier for the model to first estimate the temporal dependency only for month, and then do that for each month and president.
+
+- Try a GP for the temporal dependency? This would estimate the _covariation_ between months for free, and also GPs tend to behave better than GRW.
 
 ```python
 %load_ext watermark
