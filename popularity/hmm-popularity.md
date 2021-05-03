@@ -622,20 +622,26 @@ COORDS["president"] = presidents
 
 ```python
 with pm.Model(coords=COORDS) as hierarchical_popularity:
-    
+
     house_effect = pm.Normal("house_effect", 0, 0.15, dims="pollster_by_method")
     month_effect = pm.Normal("month_effect", 0, 0.15, shape=len(COORDS["month"]) + 1)
     shrinkage_pop = pm.HalfNormal("shrinkage_pop", 0.2)
-    month_president_effect = pm.GaussianRandomWalk("month_president_effect", mu=month_effect, sigma=shrinkage_pop, dims=("president", "month"))
+    month_president_effect = pm.GaussianRandomWalk(
+        "month_president_effect",
+        mu=month_effect,
+        sigma=shrinkage_pop,
+        dims=("president", "month"),
+    )
 
     popularity = pm.Deterministic(
         "popularity",
         pm.math.invlogit(
-             month_president_effect[president_id, month_id] + house_effect[pollster_by_method_id]
+            month_president_effect[president_id, month_id]
+            + house_effect[pollster_by_method_id]
         ),
         dims="observation",
     )
-    
+
     N_approve = pm.Binomial(
         "N_approve",
         p=popularity,
@@ -660,24 +666,27 @@ Interesting: the problem doesn't come from a -inf test point or from missing val
 
 ```python
 with pm.Model(coords=COORDS) as hierarchical_popularity:
-    
+
     house_effect = pm.Normal("house_effect", 0, 0.15, dims="pollster_by_method")
-    
+
     month_effect = pm.Normal("month_effect", 0, 0.15, dims="month")
     sd = pm.HalfNormal("shrinkage_pop", 0.2)
-    raw_rw = pm.GaussianRandomWalk("raw_rw", sigma=1., dims=("president", "month"))
+    raw_rw = pm.GaussianRandomWalk("raw_rw", sigma=1.0, dims=("president", "month"))
     month_president_effect = pm.Deterministic(
-        "month_president_effect", month_effect + raw_rw * sd, dims=("president", "month")
+        "month_president_effect",
+        month_effect + raw_rw * sd,
+        dims=("president", "month"),
     )
 
     popularity = pm.Deterministic(
         "popularity",
         pm.math.invlogit(
-             month_president_effect[president_id, month_id] + house_effect[pollster_by_method_id]
+            month_president_effect[president_id, month_id]
+            + house_effect[pollster_by_method_id]
         ),
         dims="observation",
     )
-    
+
     N_approve = pm.Binomial(
         "N_approve",
         p=popularity,
@@ -685,7 +694,7 @@ with pm.Model(coords=COORDS) as hierarchical_popularity:
         observed=data["num_approve"],
         dims="observation",
     )
-    
+
     idata = pm.sample(return_inferencedata=True)
 ```
 
@@ -719,7 +728,7 @@ COORDS["month_minus_origin"] = COORDS["month"][1:]
 
 ```python
 with pm.Model(coords=COORDS) as hierarchical_popularity:
-    
+
     baseline = pm.Normal("baseline")
     president_effect = pm.Normal("president_effect", sigma=0.15, dims="president")
     house_effect = pm.Normal("house_effect", 0, 0.15, dims="pollster_by_method")
@@ -748,7 +757,7 @@ with pm.Model(coords=COORDS) as hierarchical_popularity:
         ),
         dims="observation",
     )
-    
+
     N_approve = pm.Binomial(
         "N_approve",
         p=popularity,
@@ -756,7 +765,7 @@ with pm.Model(coords=COORDS) as hierarchical_popularity:
         observed=data["num_approve"],
         dims="observation",
     )
-    
+
     idata = pm.sample(return_inferencedata=True)
 ```
 
@@ -793,7 +802,7 @@ def ZeroSumNormal(
     Multivariate normal, such that sum(x, axis=-1) = 0.
 
     Parameters
-    
+
     name: str
         String name representation of the PyMC variable.
     sigma: float, defaults to 1
@@ -803,11 +812,11 @@ def ZeroSumNormal(
         See https://docs.pymc.io/pymc-examples/examples/pymc3_howto/data_container.html for an example.
     model: Optional[pm.Model], defaults to None
         PyMC model instance. If ``None``, a model instance is created.
-    
+
     Notes
     ----------
     Contributed by Adrian Seyboldt (@aseyboldt).
-    """ 
+    """
     if isinstance(dims, str):
         dims = (dims,)
 
@@ -847,7 +856,7 @@ with pm.Model(coords=COORDS) as hierarchical_popularity:
     president_effect = ZeroSumNormal("president_effect", sigma=0.15, dims="president")
     house_effect = ZeroSumNormal("house_effect", sigma=0.15, dims="pollster_by_method")
     month_effect = ZeroSumNormal("month_effect", sigma=0.15, dims="month")
-    
+
     # need the cumsum parametrization to properly control the init of the GRW
     rw_init = aet.zeros(shape=(len(COORDS["president"]), 1))
     rw_innovations = pm.Normal(
