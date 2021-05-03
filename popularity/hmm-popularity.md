@@ -873,7 +873,7 @@ with pm.Model(coords=COORDS) as hierarchical_popularity:
         "popularity",
         pm.math.invlogit(
             baseline
-            + president_effect[president_id]
+            president_effect[president_id]
             + month_effect[month_id]
             + month_president_effect[president_id, month_id]
             + house_effect[pollster_by_method_id]
@@ -892,7 +892,7 @@ with pm.Model(coords=COORDS) as hierarchical_popularity:
         observed=data["num_approve"],
         dims="observation",
     )
-pm.model_to_graphviz(hierarchical_popularity)
+#pm.model_to_graphviz(hierarchical_popularity)
 ```
 
 ```python
@@ -931,14 +931,14 @@ ax.set_title("$>0$ bias means (pollster, method) overestimates the latent popula
 ```
 
 ```python
-fig, axes = plt.subplots(2, 2, figsize=(14, 7), sharex=True, sharey=True)
+fig, axes = plt.subplots(2, 2, figsize=(14, 10), sharex=True, sharey=True)
 
 for ax, p in zip(axes.ravel(), idata.posterior.coords["president"]):
     post = idata.posterior.sel(president=p)
     post_pop = logistic(
         (
-            post["baseline"]
-            + post["president_effect"]
+            #post["baseline"]
+            post["president_effect"]
             + post["month_effect"]
             + post["month_president_effect"]
         ).stack(sample=("chain", "draw"))
@@ -954,6 +954,32 @@ for ax, p in zip(axes.ravel(), idata.posterior.coords["president"]):
     ax.set_xlabel("Months into term")
 ```
 
+```python
+with hierarchical_popularity:
+    predictives = pm.sample_posterior_predictive(idata)
+```
+
+```python
+data['p_approve_predicted'] = np.mean(predictives['N_approve'], axis=0) / data["samplesize"]
+```
+
+```python
+predicted_approval_rates = data["p_approve_predicted"].values
+approval_rates = data["p_approve"].values
+newterm_dates = data.reset_index().groupby("president").first()["field_date"].values
+
+dates = data.field_date
+
+fig, ax = plt.subplots(figsize=(12, 8))
+ax.plot(dates, predicted_approval_rates, "o", alpha=0.5, label="predicted")
+ax.plot(dates, approval_rates, "o", alpha=0.5, label="observed")
+ax.set_ylim(0, 1)
+ax.set_ylabel("Does approve")
+for date in newterm_dates:
+    ax.axvline(date)
+fig.legend();
+```
+
 ## TODO
 
 - Posterior predictive analysis: distribution of $p_{\mathrm{approve}}$ for each pollster and method. We can plot the approval rates for each poll for each president.
@@ -963,6 +989,8 @@ for ax, p in zip(axes.ravel(), idata.posterior.coords["president"]):
 - Estimate `month_effect` with a GRW too? This could be easier for the model to first estimate the temporal dependency only for month, and then do that for each month and president.
 
 - Try a GP for the temporal dependency? This would estimate the _covariation_ between months for free, and also GPs tend to behave better than GRW.
+
+- We do not include time correlations in the model, but it is obvious that there is a *dynamic* in the popularity and the popularity at time $t$ also depends on the popularity at times before the previous months; we could add time correlations.
 
 ```python
 %load_ext watermark
