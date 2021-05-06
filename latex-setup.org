@@ -1,0 +1,53 @@
+#+LaTeX_CLASS: article
+#+LaTeX_HEADER: \usepackage{amsmath}
+#+LaTeX_HEADER: \usepackage{amsfonts}
+#+LaTeX_HEADER: \usepackage{amssymb}
+#+LaTeX_HEADER: \usepackage{amsthm}
+#+LaTeX_HEADER: \usepackage{setspace}
+#+LaTeX_HEADER: \usepackage{mathtools}
+#+LaTeX_HEADER: \usepackage{subcaption}
+#+LaTeX_HEADER: \usepackage{suffix}
+#+LaTeX_HEADER: \RequirePackage{color}
+#+LaTeX_HEADER: \usepackage{adjustbox}
+
+# #+LaTeX_HEADER: \include{math-commands}
+
+#+LaTeX_HEADER_EXTRA: \usepackage{todonotes}
+#+LATEX_HEADER_EXTRA: \usepackage{draftwatermark}
+#+LATEX_HEADER_EXTRA: \SetWatermarkScale{1}
+#+LATEX_HEADER_EXTRA: \SetWatermarkLightness{0.90}
+
+#+LATEX_HEADER_EXTRA: \definecolor{bg}{rgb}{0.95,0.95,0.95}
+
+#+LaTeX_HEADER_EXTRA: \usepackage[authoryear]{natbib}
+#+LaTeX_HEADER_EXTRA: \usepackage{cleveref}
+
+#+LaTeX_HEADER_EXTRA: \allowdisplaybreaks
+#+LaTeX_HEADER_EXTRA: \setkeys{Gin}{keepaspectratio}
+#+LaTeX_HEADER_EXTRA: \graphicspath{{../../figures/}{../figures/}{./figures/}{./}}
+
+# Minted should be imported automatically by org-mode when `org-latex-listings` is `minted`.
+#+LaTeX_HEADER_EXTRA: \setminted{fontsize=\footnotesize, breaklines=true, breakanywhere=true, breakautoindent=true}
+
+# This env is really useful if you want to force tables into the page width.
+#+LaTeX_HEADER_EXTRA: \usepackage{adjustbox}
+#+LaTeX_HEADER_EXTRA: \newenvironment{adjusttabular}[1]{\begin{adjustbox}{max width=\maxtabfigwidth,max totalheight=\maxtabfigheight,center,tabular=#1}}{\end{adjustbox}}
+#+LaTeX_HEADER_EXTRA: \newlength{\maxtabfigwidth}
+#+LaTeX_HEADER_EXTRA: \newlength{\maxtabfigheight}
+
+# Better auto-scaling braces, brackets, etc.
+#+LaTeX_HEADER_EXTRA: \usepackage{mleftright}
+
+# This is needed for strict float placement (i.e. 'H')
+# #+LaTeX_HEADER_EXTRA: \usepackage{float}
+
+# This is how we produce multi-page listings that use minted.
+#+LaTeX_HEADER_EXTRA: \usepackage{tcolorbox}
+#+LaTeX_HEADER_EXTRA: \tcbuselibrary{minted, listings, breakable, skins}
+
+#+LaTeX_HEADER_EXTRA: \newtheorem{remark}{\bf Remark}
+
+#+LaTeX_HEADER_EXTRA: \setlength{\maxtabfigwidth}{\textwidth}
+#+LaTeX_HEADER_EXTRA: \setlength{\maxtabfigheight}{\textheight}
+# Decrease height a bit to let captions fit on one page
+#+LaTeX_HEADER_EXTRA: \addtolength{\maxtabfigheight}{-2.5em}

@@ -1,0 +1,205 @@
+#+TITLE: Modeling the president's popularity
+#+AUTHOR: Rémi Louf
+#+OPTIONS: toc:nil num:nil author:t date:t title:t d:(not "todo")
+
+#+SETUPFILE: latex-setup.org
+
+#+PROPERTY: header-args :eval never-export :exports both :results output drawer replace
+#+PROPERTY: header-args:python :noweb-sep "\n\n" :tangle yes
+#+PROPERTY: header-args:latex :results raw replace :exports results :eval yes
+
+#+begin_src elisp :session model :exports none
+(pyvenv-workon "pollsposition")
+#+end_src
+
+* Data analysis
+
+:TODO:
+ - TODO Copy data analysis over from notebook
+:END:
+
+* Model
+
+Polls are often released several times a month, not always from the same pollsters. In this configuration we think it makes sense to aggregate polls and compute the popularity per month. Although polls leave the option to not respond, we choose to ignore this option; a poll will thus consist in a number $N_{resp}$ of respondants and $N_{+}$ of respondants with a positive approval of the president. We model this with a Binomial response model:
+
+#+begin_src latex
+\begin{equation}
+  N_{+} \sim \mathrm{Binomial}(p^{+}_m,\;N_{resp})
+\end{equation}
+#+end_src
+
+where $p^{+}_m$ is the /popularity/ of the president, i.e. the probability that any person picked at random in the population would have a positive opinion about their action. This popularity at any given month $p^{+}_m$ is a function of different factors $\mu_m$, $\alpha_p$ and $\alpha_m$:
+
+#+begin_src latex
+\begin{equation}
+p^{+}_m = \mathrm{invlogit}(\beta_m + \alpha_p + \alpha_m)
+\end{equation}
+#+end_src
+
+*** Pollster and method bias
+
+As we saw earlier, pollsters all have a different bias, and we model the bias of each pollster $p$ assume
+
+#+begin_src latex
+\begin{equation}
+  \alpha_p \sim \mathrm{Normal}(\mu_p, \sigma_p)
+\end{equation}
+#+end_src
+
+Similarly, we saw that each polling method had its own bias and we model it as:
+
+#+begin_src latex
+\begin{equation}
+  \alpha_m \sim \mathrm{Normal}(\mu_m, \sigma_m)
+\end{equation}
+#+end_src
+
+*** Intrinsinc popularity
+
+The reputation of the president any given month, except during the first month of their term, depends on their popularity the previous month. We assume that the hidden state $\mu_m$ that represents the president's popularity depends on the previous month's as
+
+#+begin_src latex
+\begin{equation}
+  \beta_{m} \sim \mathrm{Normal}(\beta_{m-1}, \sigma_\beta)
+\end{equation}
+#+end_src
+
+
+#+name: imports
+#+begin_src python :session model :results silent
+import matplotlib.pyplot as plt
+import arviz as az
+import numpy as np
+import pandas as pd
+import pymc3 as pm
+#+end_src
+
+#+begin_src python :session model
+data = pd.read_csv('./popularity/plot_data/raw_polls.csv', parse_dates = True, index_col="Unnamed: 0")
+data['year'] = data.index.year
+data['month'] = data.index.month
+data['sondage'] = data['sondage'].replace('Yougov', 'YouGov')
+data['method'] = data['method'].replace('face-to-face&internet', 'face to face')
+data.head(5)
+#+end_src
+
+#+RESULTS:
+:            president sondage  samplesize        method  p_approve  p_disapprove  year  month
+: 2002-05-15   chirac2    Ifop         924         phone       0.51          0.44  2002      5
+: 2002-05-20   chirac2  Kantar         972  face to face       0.50          0.48  2002      5
+: 2002-05-23   chirac2     BVA        1054         phone       0.52          0.37  2002      5
+: 2002-05-26   chirac2   Ipsos         907         phone       0.48          0.48  2002      5
+: 2002-06-16   chirac2    Ifop         974         phone       0.49          0.43  2002      6
+
+: 2002-05-15   chirac2    Ifop         924         phone       0.51          0.44  2002      5
+: 2002-05-20   chirac2  Kantar         972  face to face       0.50          0.48  2002      5
+: 2002-05-23   chirac2     BVA        1054         phone       0.52          0.37  2002      5
+: 2002-05-26   chirac2   Ipsos         907         phone       0.48          0.48  2002      5
+: 2002-06-16   chirac2    Ifop         974         phone       0.49          0.43  2002      6
+
+** Implementations in PyMC3
+
+*** Pooled popularity / unpooled biases
+
+We first consider a model where the parameters of the model are completely pooled between mandates. We do not model for now respondants who neither approve nor disapprove.
+
+#+name: data-preparation
+#+begin_src python :session model :results silent
+pollster_id = pd.Categorical(data["sondage"]).codes
+method_id = pd.Categorical(data["method"]).codes
+months = np.hstack(
+    [pd.Categorical(data[data.president == president].index.to_period('M')).codes for president in data.president.unique()]
+)
+respondants = data["samplesize"].astype('int').values
+approvals = (data['samplesize'] * data['p_approve']).astype('int').values
+#+end_src
+
+#+name: pooled-popularity-unpooled-biais-model
+#+begin_src python :session model :results silent
+num_pollsters = len(np.unique(pollster_id))
+num_method = len(np.unique(method_id))
+num_months = np.max(months) + 1
+
+with pm.Model() as pooled_popularity:
+    alpha_p = pm.Normal("alpha_p", 0, .15, shape=num_pollsters)
+    alpha_m = pm.Normal("alpha_m", 0, .15, shape=num_method)
+
+    mu = pm.GaussianRandomWalk(
+        "mu",
+        sigma=.25,
+        shape=num_months
+        )
+
+    popularity = pm.Deterministic(
+        "popularity",
+        pm.math.invlogit(mu[months] + alpha_p[pollster_id] + alpha_m[method_id]),
+    ).squeeze()
+
+    N_approve = pm.Binomial("N_approve", respondants, popularity, observed=approvals)
+#+end_src
+
+
+#+begin_src python :session model :results silent :cache yes
+with pooled_popularity:
+    posterior = pm.sample(1000, chains=2)
+#+end_src
+
+#+begin_src python :session model :results silent
+def inv_logit(x):
+    return 1 / (1 + np.exp(-x))
+#+end_src
+
+ We plot the posterior distribution of the pollsters' bias $\alpha_p$ and the methods' bias $\alpha_m$
+
+ #+begin_src python :session model :exports nil :results graphics file :file figures/popularity-hmm-pooled-unpooled-biases-trace.png
+az.plot_trace(posterior, var_names=['alpha_p', 'alpha_m'])
+plt.savefig('figures/popularity-hmm-pooled-unpooled-biases-trace.png')
+ #+end_src
+
+ #+RESULTS:
+ [[file:figures/popularity-hmm-pooled-unpooled-biases-trace.png]]
+
+ There is a stark difference in terms of biases! Let us focus on pollsters' and methods' biases individually to see if the results match what we saw in the data.
+
+ #+begin_src python :session model
+avg_pollster_bias = list(np.mean(inv_logit(posterior['alpha_p']), axis=0))
+pollsters = pd.Categorical(data['sondage']).unique()
+dict(zip(pollsters, avg_pollster_bias))
+ #+end_src
+
+ #+RESULTS:
+ | Ifop | : | 0.5065118714311055 | Kantar | : | 0.47627421220441846 | BVA | : | 0.5924955405849165 | Ipsos | : | 0.4508195572050257 | Odoxa | : | 0.4677063641436819 | Elabe | : | 0.5885922714404689 | Viavoice | : | 0.4849600680444229 | YouGov | : | 0.4787176132299672 | Harris | : | 0.4677847743671216 | OpinionWay | : | 0.40830184460901703 |
+
+ #+begin_src python :session model
+avg_method_bias = list(np.mean(inv_logit(posterior['alpha_m']), axis=0))
+method = pd.Categorical(data['method']).unique()
+dict(zip(method, avg_method_bias))
+ #+end_src
+
+ #+RESULTS:
+ | phone | : | 0.37164587381376485 | face to face | : | 0.4861410603483682 | internet | : | 0.5768351668021877 | phone&internet | : | 0.5441969300189431 |
+
+ If $\alpha_p$ or $\alpha_m$ is smaller than 0.5 this means that we need to subtract the biais to the "real" popularity factor, in other words that the corresponding pollster or method is biased towards giving /larger/ popularity rates. On the other hand it is greater than .5 this means that the method or pollster is baised towards giving /lower/ popularity rates. The results shows above are thus consistent with the above data analysis.
+
+ Let us now post the posterior curves for the evolution of the latent popularity:
+
+ #+begin_src python :session model :results graphics file :file figures/popularity-hmm-pooled-unpooled-posterior-popularity.png
+fig, ax = plt.subplots(figsize=(8,4.5))
+for i in range(1000):
+    ax.plot(range(60), inv_logit(posterior['mu'][i,:]), alpha=.005, color="blue")
+ax.set_ylabel("Popularity")
+ax.set_xlabel("Months into term")
+ax.set_ylim(0)
+plt.savefig('figures/popularity-hmm-pooled-unpooled-posterior-popularity.png')
+ #+end_src
+
+ #+RESULTS:
+ [[file:figures/popularity-hmm-pooled-unpooled-posterior-popularity.png]]
+
+ The model does learn the general decrease in popularity as the terms progress.
+
+ :TODO:
+ - try different values for the prior variance of the random walk $\sigma$
+ - learn the variance of the random walk sigma
+ - set up a prediction pipeline for the popularity over the next months
+ :END:
