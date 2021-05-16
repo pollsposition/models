@@ -984,7 +984,9 @@ fig.legend();
 
 - Posterior predictive analysis: distribution of $p_{\mathrm{approve}}$ for each pollster and method. We can plot the approval rates for each poll for each president.
 
-- Re-read the paper by Gellman et al. on predicting the US presidential election. We may be able to catch something new given our experience with this first model.
+- Add a big event effect: even with the hierarchical structure and the Beta-Binomial likelihood, the model has troubles keeping track with wild, suddent changes in popularity.
+
+- Re-read the paper by Gelman et al. on predicting the US presidential election. We may be able to catch something new given our experience with this first model.
 
 - Estimate `month_effect` with a GRW too? This could be easier for the model to first estimate the temporal dependency only for month, and then do that for each month and president.
 
