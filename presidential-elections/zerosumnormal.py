@@ -89,8 +89,6 @@ class ZeroSumNormal(pm.Continuous):
     def __init__(self, sigma=1, *, zerosum_dims=None, zerosum_axes=None, **kwargs):
         shape = kwargs.get("shape", ())
         dims = kwargs.get("dims", None)
-        print(dims)
-        print(dims is None)
         
         if isinstance(shape, int):
             shape = (shape,)
