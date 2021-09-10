@@ -59,11 +59,7 @@ def make_centered_gp_eigendecomp(
     X = time[:, None]
 
     if kernel == "gaussian":
-        if (
-            isinstance(lengthscale, int)
-            or isinstance(lengthscale, float)
-            or isinstance(lengthscale, str)
-        ):
+        if isinstance(lengthscale, (int, float, str)):
             lengthscale = [lengthscale]
         dists = []
         for ls in lengthscale:
@@ -127,16 +123,16 @@ def make_gp_basis(time, gp_config, key=None, *, model=None):
         }
     else:
         gp_config = gp_config.copy()
-
-    if np.issubdtype(time.dtype, np.datetime64) or (
-        str(time.dtype).startswith("datetime64")
+    
+    if (
+        np.issubdtype(time.dtype, np.datetime64)
+        or (str(time.dtype).startswith("datetime64"))
+    ) and (
+        gp_config["kernel"] == "gaussian"
+        and "lengthscale" in gp_config
+        and not isinstance(gp_config["lengthscale"], str)
     ):
-        if (
-            gp_config["kernel"] == "gaussian"
-            and "lengthscale" in gp_config
-            and not isinstance(gp_config["lengthscale"], str)
-        ):
-            gp_config["lengthscale"] = f"{gp_config['lengthscale'] * 7}D"
+        gp_config["lengthscale"] = f"{gp_config['lengthscale'] * 7}D"
 
     gp_basis_funcs = make_centered_gp_eigendecomp(time, **gp_config)
     n_basis = gp_basis_funcs.shape[1]
