@@ -16,7 +16,7 @@ def set_data_and_coords(
         "farright",
         "other",
     ],
-    test_cutoff: pd.Timedelta = pd.Timedelta(2, "D"),
+    test_cutoff: pd.Timedelta = None,
 ):
     election_date = pd.to_datetime(election_date)
     polls = load_data(election_date)
@@ -95,8 +95,12 @@ def format_data(polls: pd.DataFrame, parties_complete: List[str]):
     return results, polls.reset_index()
 
 
-def train_split_and_idx_vars(polls: pd.DataFrame, election_date: pd.Timestamp, test_cutoff: pd.Timedelta):
-    test_cutoff = election_date - test_cutoff
+def train_split_and_idx_vars(polls: pd.DataFrame, election_date: pd.Timestamp, test_cutoff: pd.Timedelta = None):
+    if test_cutoff is None:
+        test_cutoff = election_date - pd.Timedelta(2, "D")
+    else:
+        test_cutoff = election_date - test_cutoff
+    
     whole_timeline = pd.date_range(polls.date[0], election_date, freq="D")
 
     polls_train = polls[polls.date <= test_cutoff]
