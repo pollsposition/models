@@ -4,6 +4,10 @@ import numpy as np
 import pymc3 as pm
 from scipy import stats
 
+"""
+Code mainly contributed by Adrian Seyboldt (@aseyboldt).
+"""
+
 
 if pm.math.erf.__module__.split(".")[0] == "theano":
     import theano

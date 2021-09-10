@@ -5,6 +5,10 @@ import pandas as pd
 import pymc3 as pm
 from scipy import linalg
 
+"""
+Code mainly contributed by Adrian Seyboldt (@aseyboldt) and Luciano Paz (@lucianopaz).
+"""
+
 
 def make_sum_zero_hh(N: int) -> np.ndarray:
     """
