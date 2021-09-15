@@ -27,6 +27,7 @@ def make_centered_gp_eigendecomp(
     time: np.ndarray,
     lengthscale: Union[float, str, List[Union[float, str]]],
     variance_limit: float = 0.95,
+    variance_weight: Optional[List[float]] = None,
     kernel: str = "gaussian",
     metric: str = "euclidean",
     zerosum: bool = False,
@@ -61,12 +62,22 @@ def make_centered_gp_eigendecomp(
     if kernel == "gaussian":
         if isinstance(lengthscale, (int, float, str)):
             lengthscale = [lengthscale]
+        
+        if variance_weight:
+            assert len(variance_weight) == len(lengthscale), "`variance_weight` must have the same length as `lengthscale`."
+            variance_weight = np.asarray(variance_weight)
+            assert variance_weight.sum() == 1, "`variance_weight` must sum to 1."
+        else:
+            variance_weight = np.ones_like(lengthscale)
+        print(variance_weight)
+        
         dists = []
         for ls in lengthscale:
             if isinstance(ls, str):
                 ls = pd.to_timedelta(ls).to_timedelta64()
             dists.append(((X - X.T) / np.array(ls)) ** 2)
-        cov = sum(np.exp(-(dist) / 2) for dist in dists) / len(lengthscale)
+        
+        cov = sum(a * np.exp(-dist / 2) for (a, dist) in zip(variance_weight, dists)) / len(lengthscale)
 
     elif kernel == "periodic":
         if len(lengthscale) > 1:
