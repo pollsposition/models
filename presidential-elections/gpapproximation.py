@@ -62,14 +62,15 @@ def make_centered_gp_eigendecomp(
     if kernel == "gaussian":
         if isinstance(lengthscale, (int, float, str)):
             lengthscale = [lengthscale]
-        
+            
         if variance_weight:
-            assert len(variance_weight) == len(lengthscale), "`variance_weight` must have the same length as `lengthscale`."
+            assert len(variance_weight) == len(
+                lengthscale
+            ), "`variance_weight` must have the same length as `lengthscale`."
             variance_weight = np.asarray(variance_weight)
             assert variance_weight.sum() == 1, "`variance_weight` must sum to 1."
         else:
             variance_weight = np.ones_like(lengthscale)
-        print(variance_weight)
         
         dists = []
         for ls in lengthscale:
@@ -77,15 +78,22 @@ def make_centered_gp_eigendecomp(
                 ls = pd.to_timedelta(ls).to_timedelta64()
             dists.append(((X - X.T) / np.array(ls)) ** 2)
         
-        cov = sum(a * np.exp(-dist / 2) for (a, dist) in zip(variance_weight, dists)) / len(lengthscale)
+        cov = sum(
+            w * np.exp(-dist / 2) for (w, dist) in zip(variance_weight, dists)
+        ) / len(lengthscale)
 
     elif kernel == "periodic":
         if len(lengthscale) > 1:
             raise NotImplementedError(
                 f"Multiple lengthscales can only be used with the Gaussian kernel."
             )
+        elif variance_weight:
+            raise NotImplementedError(
+                f"`variance_weight` can only be used with the Gaussian kernel."
+            )
         elif isinstance(period, str):
             period = pd.to_timedelta(period).to_timedelta64()
+        
         dists = np.pi * ((time[:, None] - time[None, :]) / period)
         cov = np.exp(-2 * (np.sin(dists) / lengthscale) ** 2)
 
