@@ -68,7 +68,7 @@ def make_centered_gp_eigendecomp(
                 lengthscale
             ), "`variance_weight` must have the same length as `lengthscale`."
             variance_weight = np.asarray(variance_weight)
-            assert variance_weight.sum() == 1, "`variance_weight` must sum to 1."
+            assert np.isclose(variance_weight.sum(), 1.0), "`variance_weight` must sum to 1."
         else:
             variance_weight = np.ones_like(lengthscale)
         
