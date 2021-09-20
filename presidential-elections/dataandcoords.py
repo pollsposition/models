@@ -6,8 +6,9 @@ import pandas as pd
 
 
 def set_data_and_coords(
-    election_date: str,
-    parties_complete: List[str] = [
+    test_cutoff: pd.Timedelta = None,
+):
+    parties_complete = [
         "farleft",
         "left",
         "green",
@@ -15,68 +16,77 @@ def set_data_and_coords(
         "right",
         "farright",
         "other",
-    ],
-    test_cutoff: pd.Timedelta = None,
-):
-    election_date = pd.to_datetime(election_date)
-    polls = load_data(election_date)
+    ]
+    polls = load_data()
     results, polls = format_data(polls, parties_complete)
-    (
-        polls_train,
-        polls_test,
-        observed_days_id,
-        estimated_days,
-        whole_timeline,
-    ) = train_split_and_idx_vars(polls, election_date, test_cutoff)
-    pollster_id, COORDS = dims_and_coords(polls_train, parties_complete, whole_timeline)
-    plot_check(polls, parties_complete)
+    #(
+     #   polls_train,
+      #  polls_test,
+       # observed_days_id,
+        #estimated_days,
+        #whole_timeline,
+#    ) = train_split_and_idx_vars(polls, election_date, test_cutoff)
+ #   pollster_id, COORDS = dims_and_coords(polls_train, parties_complete, whole_timeline)
+  #  plot_check(polls, parties_complete)
 
-    return (
-        polls_train,
-        polls_test,
-        results,
-        observed_days_id,
-        estimated_days,
-        pollster_id,
-        COORDS,
-    )
+#    return (
+ #       polls_train,
+  #      polls_test,
+   #     results,
+    #    observed_days_id,
+     #   estimated_days,
+      #  pollster_id,
+       # COORDS,
+    #)
+    return results, polls
 
 
-def load_data(election_date: str):
+def load_data():
     polls = pd.read_csv(
         "../../data/polls_1st_round/tour1_complet_unitedfl.csv",
         index_col=0,
         parse_dates=["dateelection", "date"],
     )
-
-    return (
-        polls[
-            (polls.dateelection == election_date)
-            & (polls.date >= f"{election_date.year}-01")
-        ]
-        .drop(
-            [
-                "type",
-                "dateelection",
-                "abstention",
-                "undecided",
-            ],
-            axis=1,
-        )
-        .set_index(["date", "sondage", "samplesize"])
-        .sort_index()
+    
+    # only president elections after 2002
+    polls = polls[(polls.date >= "2002-01") & (polls.type == "president")].drop(
+        [
+            "type",
+            "abstention",
+            "undecided",
+        ],
+        axis=1,
     )
+    
+    # no green party candidate in 2017
+    polls.loc[polls["dateelection"] == "2017-04-23", "nbgreen"] = 0
+
+    return polls.sort_values(
+        ["dateelection", "date", "sondage", "samplesize"]
+    ).reset_index(drop=True)
 
 
 def format_data(polls: pd.DataFrame, parties_complete: List[str]):
-    polls = polls.rename(
-        columns={col: col.split("nb")[1] for col in polls if col.startswith("nb")}
-    )[parties_complete[:-1]]
-
-    # compute other category
+    
+    # start all elections on Jan 1st
+    dfs = []
+    for date in polls.dateelection.unique():
+        date = pd.to_datetime(date)
+        df = polls[(polls.dateelection == date) & (polls.date >= f"{date.year}-01")]
+        df["countdown"] = dates_to_idx(df["date"], date).astype(int)
+        dfs.append(df)
+    
+    # compute "other" category
+    polls = (
+        pd.concat(dfs)
+        .set_index(["dateelection", "date", "countdown", "sondage", "samplesize"])
+        .rename(columns={col: col.split("nb")[1] for col in polls if col.startswith("nb")})[
+            parties_complete[:-1]
+        ]
+    )
     polls["other"] = 100 - polls.sum(1)
     np.testing.assert_allclose(polls.sum(1).values, 100)
-
+    
     # isolate results
     polls = polls.reset_index()
     results = polls[polls.sondage == "result"]
@@ -108,17 +118,14 @@ def train_split_and_idx_vars(polls: pd.DataFrame, election_date: pd.Timestamp, t
 
     observed_days_idx = dates_to_idx(polls_train["date"]).astype(int)
     estimated_days = dates_to_idx(whole_timeline).astype(int)
-    # observed_days_distances = dates_to_idx(polls_train.date.unique()).astype(int)
-    # observed_days_idx, COORDS["observed_days"] = polls_train.date.factorize()
 
     return polls_train, polls_test, observed_days_idx, estimated_days, whole_timeline
 
 
-def dates_to_idx(timelist):
-    """Convert datetimes to numbers in reference to a given date"""
+def dates_to_idx(timelist, reference_date):
+    """Convert datetimes to numbers in reference to reference_date"""
 
-    reference_time = timelist[0]
-    t = (timelist - reference_time) / np.timedelta64(1, "D")
+    t = (reference_date - timelist) / np.timedelta64(1, "D")
 
     return np.asarray(t)
 
