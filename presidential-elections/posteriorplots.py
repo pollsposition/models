@@ -61,15 +61,24 @@ def retrodictive_plot(
     
     
 def predictive_plot(
-    predictions: arviz.InferenceData,
+    idata: arviz.InferenceData,
     parties_complete: List[str],
+    election_date: str,
+    results: pd.DataFrame,
     polls_train: pd.DataFrame,
     polls_test: pd.DataFrame,
-    results: pd.DataFrame,
-    election_date: str,
     test_cutoff: pd.Timedelta = None,
 ):
     election_date = pd.to_datetime(election_date)
+    results = results[results.dateelection == election_date]
+    new_dates = idata.predictions_constant_data["observations"].to_index()
+    predictions = idata.predictions.sel(
+        observations=new_dates[new_dates >= f"{election_date.year}"]
+    )
+    constant_data = idata.predictions_constant_data.sel(
+        observations=new_dates[new_dates >= f"{election_date.year}"]
+    )
+    
     if test_cutoff is None:
         test_cutoff = election_date - pd.Timedelta(2, "D")
     else:
@@ -88,11 +97,11 @@ def predictive_plot(
         axes[-1].remove()
 
     colors = sns.color_palette("rocket", n_colors=len(parties_complete), as_cmap=False)
-
-    post_N = predictions.predictions_constant_data["observed_N"]
-    POST_MEANS = predictions.predictions["popularity"].mean(("chain", "draw"))
-    HDI_POP = arviz.hdi(predictions.predictions)["popularity"]
-    HDI_MULT = arviz.hdi(predictions.predictions)["N_approve"] / post_N
+    
+    post_N = constant_data["observed_N"]
+    POST_MEANS = predictions["popularity"].mean(("chain", "draw"))
+    HDI_POP = arviz.hdi(predictions)["popularity"]
+    HDI_MULT = arviz.hdi(predictions)["N_approve"] / post_N
 
     for i, p in enumerate(parties_complete):
         axes[i].plot(
@@ -121,7 +130,7 @@ def predictive_plot(
             label="Result",
         )
         axes[i].fill_between(
-            predictions.predictions["estimated_days"],
+            predictions["observations"],
             HDI_MULT.sel(parties_complete=p, hdi="lower"),
             HDI_MULT.sel(parties_complete=p, hdi="higher"),
             color=colors[i],
@@ -129,7 +138,7 @@ def predictive_plot(
             label="HDI Polls",
         )
         axes[i].fill_between(
-            predictions.predictions["estimated_days"],
+            predictions["observations"],
             HDI_POP.sel(parties_complete=p, hdi="lower"),
             HDI_POP.sel(parties_complete=p, hdi="higher"),
             color=colors[i],
@@ -137,7 +146,7 @@ def predictive_plot(
             label="HDI Popularity",
         )
         axes[i].plot(
-            predictions.predictions["estimated_days"],
+            predictions["observations"],
             POST_MEANS.sel(parties_complete=p),
             color=colors[i],
             label="Mean Popularity",
