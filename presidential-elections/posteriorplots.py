@@ -73,10 +73,10 @@ def predictive_plot(
     results = results[results.dateelection == election_date]
     new_dates = idata.predictions_constant_data["observations"].to_index()
     predictions = idata.predictions.sel(
-        observations=new_dates[new_dates >= f"{election_date.year}"]
+        observations=new_dates[new_dates.year == int(f"{election_date.year}")]
     )
     constant_data = idata.predictions_constant_data.sel(
-        observations=new_dates[new_dates >= f"{election_date.year}"]
+        observations=new_dates[new_dates.year == int(f"{election_date.year}")]
     )
     
     if test_cutoff is None:

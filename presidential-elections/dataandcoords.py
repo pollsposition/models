@@ -146,6 +146,28 @@ def dims_and_coords(
 
     return pollster_id, COORDS
 
+#COORDS = {
+ #   "parties": ["farleft", "left", "green", "center", "right", "farright"],
+  #  "parties_complete": [
+   #     "farleft",
+    #    "left",
+     #   "green",
+      #  "center",
+       # "right",
+        #"farright",
+        #"other",
+#    ],
+#}
+
+#pollster_id, COORDS["pollsters"] = polls["sondage"].factorize(sort=True)
+#countdown_id, COORDS["countdown"] = polls.countdown.values, np.arange(
+ #   polls.countdown.max() + 1
+#)
+#election_id, COORDS["elections"] = polls["dateelection"].factorize()
+#COORDS[
+ #   "observations"
+#] = polls.index
+
 
 def plot_check(polls: pd.DataFrame, parties_complete: List[str]):
     fig, ax = plt.subplots(figsize=(12, 5))
