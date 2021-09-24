@@ -101,7 +101,6 @@ def predictive_plot(
     post_N = constant_data["observed_N"]
     POST_MEANS = predictions["latent_popularity"].mean(("chain", "draw"))
     HDI_POP = arviz.hdi(predictions)["latent_popularity"]
-    HDI_POP2 = arviz.hdi(predictions)["noisy_popularity"]
     HDI_MULT = arviz.hdi(predictions)["N_approve"] / post_N
 
     for i, p in enumerate(parties_complete):
@@ -144,22 +143,14 @@ def predictive_plot(
             alpha=0.4,
             label="HDI Popularity",
         )
-#        axes[i].fill_between(
- #           predictions["observations"],
-  #          HDI_POP2.sel(parties_complete=p, hdi="lower"),
-   #         HDI_POP2.sel(parties_complete=p, hdi="higher"),
-    #        color=colors[i],
-     #       alpha=0.3,
-      #      label="HDI Popularity 2",
-       # )
-#        axes[i].fill_between(
- #           predictions["observations"],
-  #          HDI_MULT.sel(parties_complete=p, hdi="lower"),
-   #         HDI_MULT.sel(parties_complete=p, hdi="higher"),
-    #        color=colors[i],
-     #       alpha=0.2,
-      #      label="HDI Polls",
-       # )
+        axes[i].fill_between(
+            predictions["observations"],
+            HDI_MULT.sel(parties_complete=p, hdi="lower"),
+            HDI_MULT.sel(parties_complete=p, hdi="higher"),
+            color=colors[i],
+            alpha=0.2,
+            label="HDI Polls",
+        )
         axes[i].axvline(
             x=test_cutoff,
             ymin=-0.01,
