@@ -19,26 +19,22 @@ def set_data_and_coords(
     ]
     polls = load_data()
     results, polls = format_data(polls, parties_complete)
-    #(
-     #   polls_train,
-      #  polls_test,
-       # observed_days_id,
-        #estimated_days,
-        #whole_timeline,
-#    ) = train_split_and_idx_vars(polls, election_date, test_cutoff)
- #   pollster_id, COORDS = dims_and_coords(polls_train, parties_complete, whole_timeline)
+    (
+        polls_train,
+        polls_test,
+    ) = train_split_and_idx_vars(polls, test_cutoff)
+    pollster_id, countdown_id, election_id, COORDS = dims_and_coords(polls_train, parties_complete)
   #  plot_check(polls, parties_complete)
 
-#    return (
- #       polls_train,
-  #      polls_test,
-   #     results,
-    #    observed_days_id,
-     #   estimated_days,
-      #  pollster_id,
-       # COORDS,
-    #)
-    return results, polls
+    return (
+        polls_train,
+        polls_test,
+        results,
+        pollster_id,
+        countdown_id, 
+        election_id,
+        COORDS,
+    )
 
 
 def load_data():
@@ -105,21 +101,29 @@ def format_data(polls: pd.DataFrame, parties_complete: List[str]):
     return results, polls.reset_index()
 
 
-def train_split_and_idx_vars(polls: pd.DataFrame, election_date: pd.Timestamp, test_cutoff: pd.Timedelta = None):
-    if test_cutoff is None:
-        test_cutoff = election_date - pd.Timedelta(2, "D")
-    else:
-        test_cutoff = election_date - test_cutoff
+def train_split_and_idx_vars(
+    polls: pd.DataFrame, 
+    test_cutoff: pd.Timedelta = None
+):
+        
+    dfs_train = []
+    dfs_test = []
+    for date in polls.dateelection.unique():
+        date = pd.to_datetime(date)
+        df = polls[polls.dateelection == date]
+        if test_cutoff:
+            test_cutoff_ = date - test_cutoff
+        else:
+            test_cutoff_ = date - pd.Timedelta(2, "D")
+        dfs_train.append(df[df.date <= test_cutoff_])
+        dfs_test.append(df[df.date > test_cutoff_])
     
-    whole_timeline = pd.date_range(polls.date[0], election_date, freq="D")
+#    whole_timeline = pd.date_range(polls.date[0], election_date, freq="D")
 
-    polls_train = polls[polls.date <= test_cutoff]
-    polls_test = polls[polls.date > test_cutoff]
+ #   observed_days_idx = dates_to_idx(polls_train["date"]).astype(int)
+  ##  estimated_days = dates_to_idx(whole_timeline).astype(int)
 
-    observed_days_idx = dates_to_idx(polls_train["date"]).astype(int)
-    estimated_days = dates_to_idx(whole_timeline).astype(int)
-
-    return polls_train, polls_test, observed_days_idx, estimated_days, whole_timeline
+    return pd.concat(dfs_train), pd.concat(dfs_test) #, observed_days_idx, estimated_days, whole_timeline
 
 
 def dates_to_idx(timelist, reference_date):
@@ -133,44 +137,24 @@ def dates_to_idx(timelist, reference_date):
 def dims_and_coords(
     polls_train: pd.DataFrame,
     parties_complete: List[str],
-    whole_timeline: pd.DatetimeIndex,
 ):
     COORDS = {
-        "estimated_days": whole_timeline,
-        "observed_days": polls_train["date"],
-        "observations": polls_train.set_index(["date", "sondage", "samplesize"]).index,
+        "observations": polls_train.index,
         "parties": parties_complete[:-1],
         "parties_complete": parties_complete,
     }
-    pollster_id, COORDS["pollsters"] = polls_train["sondage"].factorize(sort=True)
+    pollster_id, COORDS["pollsters"] = polls_train["sondage"].factorize(sort=True)    
+    countdown_id, COORDS["countdown"] = polls_train["countdown"].values, np.arange(
+        polls_train["countdown"].max() + 1
+    )
+    election_id, COORDS["elections"] = polls_train["dateelection"].factorize()
 
-    return pollster_id, COORDS
-
-#COORDS = {
- #   "parties": ["farleft", "left", "green", "center", "right", "farright"],
-  #  "parties_complete": [
-   #     "farleft",
-    #    "left",
-     #   "green",
-      #  "center",
-       # "right",
-        #"farright",
-        #"other",
-#    ],
-#}
-
-#pollster_id, COORDS["pollsters"] = polls["sondage"].factorize(sort=True)
-#countdown_id, COORDS["countdown"] = polls.countdown.values, np.arange(
- #   polls.countdown.max() + 1
-#)
-#election_id, COORDS["elections"] = polls["dateelection"].factorize()
-#COORDS[
- #   "observations"
-#] = polls.index
+    return pollster_id, countdown_id, election_id, COORDS
 
 
 def plot_check(polls: pd.DataFrame, parties_complete: List[str]):
     fig, ax = plt.subplots(figsize=(12, 5))
     for p in parties_complete:
         ax.plot(polls["date"], polls[p] / polls["samplesize"], "o", label=p, alpha=0.4)
-    ax.legend(ncol=4, frameon=True, loc="upper right");
+    ax.legend(ncol=4, frameon=True, loc="upper right")
+    

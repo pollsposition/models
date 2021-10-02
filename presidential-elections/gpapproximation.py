@@ -1,5 +1,6 @@
 from typing import List, Optional, Union
 
+import arviz
 import numpy as np
 import pandas as pd
 import pymc3 as pm
@@ -159,3 +160,13 @@ def make_gp_basis(time, gp_config, key=None, *, model=None):
     model.add_coords({dim: pd.RangeIndex(n_basis)})
 
     return gp_basis_funcs, dim
+
+
+def sample_all(var_names: List[str], **sampler_kwargs):
+    prior_checks = pm.sample_prior_predictive(var_names=var_names)
+    posterior = pm.sample(return_inferencedata=False, **sampler_kwargs)
+    post_checks = pm.sample_posterior_predictive(posterior, var_names=var_names)
+    
+    return arviz.from_pymc3(
+        posterior, prior=prior_checks, posterior_predictive=post_checks
+    )
