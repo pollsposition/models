@@ -105,25 +105,21 @@ def train_split_and_idx_vars(
     polls: pd.DataFrame, 
     test_cutoff: pd.Timedelta = None
 ):
-        
-    dfs_train = []
-    dfs_test = []
-    for date in polls.dateelection.unique():
-        date = pd.to_datetime(date)
-        df = polls[polls.dateelection == date]
-        if test_cutoff:
-            test_cutoff_ = date - test_cutoff
-        else:
-            test_cutoff_ = date - pd.Timedelta(2, "D")
-        dfs_train.append(df[df.date <= test_cutoff_])
-        dfs_test.append(df[df.date > test_cutoff_])
     
-#    whole_timeline = pd.date_range(polls.date[0], election_date, freq="D")
+    last_election = polls.dateelection.unique()[-1]
+    polls_train = polls[polls.dateelection != last_election]
+    polls_test = polls[polls.dateelection == last_election]
+    
+    if test_cutoff:
+        test_cutoff_ = last_election - test_cutoff
+    else:
+        test_cutoff_ = last_election - pd.Timedelta(2, "D")
+    
+    polls_train = pd.concat([polls_train, polls_test[polls_test.date <= test_cutoff_]])
+    polls_test = polls_test[polls_test.date > test_cutoff_]
+    
 
- #   observed_days_idx = dates_to_idx(polls_train["date"]).astype(int)
-  ##  estimated_days = dates_to_idx(whole_timeline).astype(int)
-
-    return pd.concat(dfs_train), pd.concat(dfs_test) #, observed_days_idx, estimated_days, whole_timeline
+    return polls_train, polls_test
 
 
 def dates_to_idx(timelist, reference_date):
