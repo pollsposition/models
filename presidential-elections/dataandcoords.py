@@ -139,7 +139,7 @@ def dims_and_coords(
         "parties": parties_complete[:-1],
         "parties_complete": parties_complete,
     }
-    pollster_id, COORDS["pollsters"] = polls_train["sondage"].factorize(sort=True)    
+    pollster_id, COORDS["pollsters"] = polls_train["sondage"].factorize(sort=True)
     countdown_id, COORDS["countdown"] = polls_train["countdown"].values, np.arange(
         polls_train["countdown"].max() + 1
     )
