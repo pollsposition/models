@@ -67,7 +67,10 @@ def make_centered_gp_eigendecomp(
     period : float or str
         Only used if the kernel is periodic. Determines the period of the kernel.
     a: Optional[np.ndarray] = None 
-        NEED DOCSTING
+        If the time obs are not evenly spaced, pass a vector counting the number of
+        obs for each time unit (e.g 3 polls for day 0, 0 poll for day 1, etc.).
+        If ``zerosum=True``, makes sure the GP sums zero over that axis instead of 
+        the default uniform time axis (i.e 1 obs per time unit).
     """
 
     ## Construct covariance matrix
