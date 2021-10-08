@@ -18,7 +18,7 @@ def make_sum_zero_hh(N: int, a: Optional[np.ndarray] = None) -> np.ndarray:
     if a is not None:
         if a.ndim != 1:
             raise NotImplementedError(
-                "You idiot, that's not implemented yet, and it will never be!"
+                "You idiot, that's not implemented, and it never will!"
             )
         assert N == len(a), "The `a` vector must have same length as the GP cov matrix."
         a = a.astype(float)
