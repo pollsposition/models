@@ -11,6 +11,29 @@ Code mainly contributed by Adrian Seyboldt (@aseyboldt) and Luciano Paz (@lucian
 """
 
 
+def _make_sum_zero_hh(N: int, a: Optional[np.ndarray] = None) -> np.ndarray:
+    """
+    Build a householder transformation matrix that maps e_1 to a vector of all 1s.
+    """
+    if a is not None:
+        if a.ndim != 1:
+            raise NotImplementedError(
+                "You idiot, that's not implemented, and it never will!"
+            )
+        assert N == len(a), "The `a` vector must have same length as the GP cov matrix."
+        a = a.astype(float)
+    else:
+        a = np.ones(N)
+    
+    e_1 = np.zeros(N)
+    e_1[0] = 1
+    a /= np.sqrt(a @ a)
+    v = a + e_1
+    v /= np.sqrt(v @ v)
+    
+    return np.eye(N) - 2 * np.outer(v, v)
+
+
 def make_sum_zero_hh(N: int) -> np.ndarray:
     """
     Build a householder transformation matrix that maps e_1 to a vector of all 1s.
@@ -33,9 +56,11 @@ def make_centered_gp_eigendecomp(
     metric: str = "euclidean",
     zerosum: bool = False,
     period: Optional[Union[float, str]] = None,
+    a: Optional[np.ndarray] = None
 ):
     """
     Decompose the GP into eigen values and eigen vectors.
+
     Parameters
     ----------
     time : np.ndarray
@@ -54,6 +79,11 @@ def make_centered_gp_eigendecomp(
         thus sum to 0 along the time axis.
     period : float or str
         Only used if the kernel is periodic. Determines the period of the kernel.
+    a: Optional[np.ndarray] = None 
+        If the time obs are not evenly spaced, pass a vector counting the number of
+        obs for each time unit (e.g 3 polls for day 0, 0 poll for day 1, etc.).
+        If ``zerosum=True``, makes sure the GP sums zero over that axis instead of 
+        the default uniform time axis (i.e 1 obs per time unit).
     """
 
     ## Construct covariance matrix
@@ -103,7 +133,7 @@ def make_centered_gp_eigendecomp(
         )
 
     if zerosum:
-        Q = make_sum_zero_hh(len(cov))
+        Q = make_sum_zero_hh(len(cov), a=a)
         D = np.eye(len(cov))
         D[0, 0] = 0
 
