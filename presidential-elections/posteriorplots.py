@@ -28,11 +28,18 @@ def retrodictive_plot(
 
     N = trace.constant_data["observed_N"]
     if group == "posterior":
-        var = trace.posterior_predictive
+        pp = trace.posterior_predictive
+        POST_MEANS_POP = pp["latent_popularity"].mean(("chain", "draw"))
+        HDI_POP = arviz.hdi(pp)["latent_popularity"]
+        
     elif group == "prior":
-        var = trace.prior_predictive
-    POST_MEANS = (var["N_approve"] / N).mean(("chain", "draw"))
-    HDI = arviz.hdi(var)["N_approve"] / N
+        prior = trace.prior
+        pp = trace.prior_predictive
+        POST_MEANS_POP = prior["latent_popularity"].mean(("chain", "draw"))
+        HDI_POP = arviz.hdi(prior)["latent_popularity"]
+    
+    POST_MEANS = (pp["N_approve"] / N).mean(("chain", "draw"))
+    HDI = arviz.hdi(pp)["N_approve"] / N
 
     for i, p in enumerate(parties_complete):
         if group == "posterior":
@@ -54,6 +61,20 @@ def retrodictive_plot(
             polls_train["date"],
             POST_MEANS.sel(parties_complete=p),
             color=colors[i],
+        )
+        axes[i].plot(
+            polls_train["date"],
+            POST_MEANS_POP.sel(parties_complete=p),
+            color=colors[i],
+            label="Mean Popularity",
+        )
+        axes[i].fill_between(
+            polls_train["date"],
+            HDI_POP.sel(parties_complete=p, hdi="lower"),
+            HDI_POP.sel(parties_complete=p, hdi="higher"),
+            color=colors[i],
+            alpha=0.4,
+            label="HDI Popularity",
         )
         axes[i].tick_params(axis="x", labelrotation=45, labelsize=10)
         axes[i].set(title=p.title())
