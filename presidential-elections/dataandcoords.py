@@ -22,18 +22,19 @@ def set_data_and_coords(
     (
         polls_train,
         polls_test,
-    ) = train_split_and_idx_vars(polls, test_cutoff)
-    pollster_id, countdown_id, election_id, COORDS = dims_and_coords(polls_train, parties_complete)
+    ) = train_split(polls, test_cutoff)
+#    pollster_id, countdown_id, election_id, COORDS = dims_and_coords(polls_train, parties_complete)
   #  plot_check(polls, parties_complete)
 
     return (
         polls_train,
         polls_test,
         results,
-        pollster_id,
-        countdown_id, 
-        election_id,
-        COORDS,
+        parties_complete
+#        pollster_id,
+ #       countdown_id, 
+  #      election_id,
+   #     COORDS,
     )
 
 
@@ -101,7 +102,7 @@ def format_data(polls: pd.DataFrame, parties_complete: List[str]):
     return results, polls.reset_index()
 
 
-def train_split_and_idx_vars(
+def train_split(
     polls: pd.DataFrame, 
     test_cutoff: pd.Timedelta = None
 ):
@@ -118,7 +119,6 @@ def train_split_and_idx_vars(
     polls_train = pd.concat([polls_train, polls_test[polls_test.date <= test_cutoff_]])
     polls_test = polls_test[polls_test.date > test_cutoff_]
     
-
     return polls_train, polls_test
 
 
