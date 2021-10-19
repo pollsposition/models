@@ -162,7 +162,7 @@ def make_gp_basis(time, gp_config, key=None, *, model=None):
 
 
 def sample_all(var_names: List[str], **sampler_kwargs):
-    prior_checks = pm.sample_prior_predictive(var_names=var_names)
+    prior_checks = pm.sample_prior_predictive()
     posterior = pm.sample(return_inferencedata=False, **sampler_kwargs)
     post_checks = pm.sample_posterior_predictive(posterior, var_names=var_names)
     
