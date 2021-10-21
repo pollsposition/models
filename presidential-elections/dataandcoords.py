@@ -23,28 +23,22 @@ def set_data_and_coords(
         polls_train,
         polls_test,
     ) = train_split(polls, test_cutoff)
-#    pollster_id, countdown_id, election_id, COORDS = dims_and_coords(polls_train, parties_complete)
-  #  plot_check(polls, parties_complete)
 
     return (
         polls_train,
         polls_test,
         results,
         parties_complete
-#        pollster_id,
- #       countdown_id, 
-  #      election_id,
-   #     COORDS,
     )
 
 
 def load_data():
     polls = pd.read_csv(
-        "../../data/polls_1st_round/tour1_complet_unitedfl.csv",
+        "https://raw.githubusercontent.com/pollsposition/data/main/sondages/tour1_complet_unitedfl.csv",
         index_col=0,
         parse_dates=["dateelection", "date"],
     )
-    
+
     # only president elections after 2002
     polls = polls[(polls.date >= "2002-01") & (polls.type == "president")].drop(
         [
@@ -54,7 +48,7 @@ def load_data():
         ],
         axis=1,
     )
-    
+
     # no green party candidate in 2017
     polls.loc[polls["dateelection"] == "2017-04-23", "nbgreen"] = 0
 
@@ -64,7 +58,7 @@ def load_data():
 
 
 def format_data(polls: pd.DataFrame, parties_complete: List[str]):
-    
+
     # start all elections on Jan 1st
     dfs = []
     for date in polls.dateelection.unique():
@@ -72,7 +66,7 @@ def format_data(polls: pd.DataFrame, parties_complete: List[str]):
         df = polls[(polls.dateelection == date) & (polls.date >= f"{date.year}-01")]
         df["countdown"] = dates_to_idx(df["date"], date).astype(int)
         dfs.append(df)
-    
+
     # compute "other" category
     polls = (
         pd.concat(dfs)
@@ -83,7 +77,7 @@ def format_data(polls: pd.DataFrame, parties_complete: List[str]):
     )
     polls["other"] = 100 - polls.sum(1)
     np.testing.assert_allclose(polls.sum(1).values, 100)
-    
+
     # isolate results
     polls = polls.reset_index()
     results = polls[polls.sondage == "result"]
@@ -103,22 +97,22 @@ def format_data(polls: pd.DataFrame, parties_complete: List[str]):
 
 
 def train_split(
-    polls: pd.DataFrame, 
+    polls: pd.DataFrame,
     test_cutoff: pd.Timedelta = None
 ):
-    
+
     last_election = polls.dateelection.unique()[-1]
     polls_train = polls[polls.dateelection != last_election]
     polls_test = polls[polls.dateelection == last_election]
-    
+
     if test_cutoff:
         test_cutoff_ = last_election - test_cutoff
     else:
         test_cutoff_ = last_election - pd.Timedelta(2, "D")
-    
+
     polls_train = pd.concat([polls_train, polls_test[polls_test.date <= test_cutoff_]])
     polls_test = polls_test[polls_test.date > test_cutoff_]
-    
+
     return polls_train, polls_test
 
 
@@ -153,4 +147,4 @@ def plot_check(polls: pd.DataFrame, parties_complete: List[str]):
     for p in parties_complete:
         ax.plot(polls["date"], polls[p] / polls["samplesize"], "o", label=p, alpha=0.4)
     ax.legend(ncol=4, frameon=True, loc="upper right")
-    
+
