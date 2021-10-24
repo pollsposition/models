@@ -62,7 +62,7 @@ def make_centered_gp_eigendecomp(
     if kernel == "gaussian":
         if isinstance(lengthscale, (int, float, str)):
             lengthscale = [lengthscale]
-            
+
         if variance_weight:
             assert len(variance_weight) == len(
                 lengthscale
@@ -71,13 +71,13 @@ def make_centered_gp_eigendecomp(
             assert np.isclose(variance_weight.sum(), 1.0), "`variance_weight` must sum to 1."
         else:
             variance_weight = np.ones_like(lengthscale)
-        
+
         dists = []
         for ls in lengthscale:
             if isinstance(ls, str):
                 ls = pd.to_timedelta(ls).to_timedelta64()
             dists.append(((X - X.T) / np.array(ls)) ** 2)
-        
+
         cov = sum(
             w * np.exp(-dist / 2) for (w, dist) in zip(variance_weight, dists)
         ) / len(lengthscale)
@@ -93,7 +93,7 @@ def make_centered_gp_eigendecomp(
             )
         elif isinstance(period, str):
             period = pd.to_timedelta(period).to_timedelta64()
-        
+
         dists = np.pi * ((time[:, None] - time[None, :]) / period)
         cov = np.exp(-2 * (np.sin(dists) / lengthscale) ** 2)
 
@@ -142,7 +142,7 @@ def make_gp_basis(time, gp_config, key=None, *, model=None):
         }
     else:
         gp_config = gp_config.copy()
-    
+
     if (
         np.issubdtype(time.dtype, np.datetime64)
         or (str(time.dtype).startswith("datetime64"))
@@ -159,13 +159,3 @@ def make_gp_basis(time, gp_config, key=None, *, model=None):
     model.add_coords({dim: pd.RangeIndex(n_basis)})
 
     return gp_basis_funcs, dim
-
-
-def sample_all(var_names: List[str], **sampler_kwargs):
-    prior_checks = pm.sample_prior_predictive()
-    posterior = pm.sample(return_inferencedata=False, **sampler_kwargs)
-    post_checks = pm.sample_posterior_predictive(posterior, var_names=var_names)
-    
-    return arviz.from_pymc3(
-        posterior, prior=prior_checks, posterior_predictive=post_checks
-    )
