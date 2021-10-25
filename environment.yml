@@ -2,8 +2,7 @@ name: elections-models
 channels:
   - conda-forge
 dependencies:
-  - aesara>=2.0.9
-  - arviz>=0.11.2
+  - arviz
   - black
   - bokeh
   - dill
@@ -18,10 +17,10 @@ dependencies:
   - openpyxl
   - pandas
   - pip
+  - pymc3
   - python-graphviz
+  - seaborn
   - scipy
   - shapely
   - watermark
   - xlrd
-  - pip:
-      - git+https://github.com/pymc-devs/pymc3
