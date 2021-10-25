@@ -374,7 +374,7 @@ class ModelBuilder:
             (
                 unemployment_effect,
                 gas_effect,
-                # popularity_effect,
+                popularity_effect,
                 incumbency_effect,
             ) = self._build_predictors()
 
@@ -397,7 +397,7 @@ class ModelBuilder:
                 election_party_time_effect,
                 unemployment_effect,
                 gas_effect,
-                # popularity_effect,
+                popularity_effect,
                 incumbency_effect,
                 house_effects,
                 house_election_effects,
@@ -575,16 +575,16 @@ class ModelBuilder:
             sigma=0.1,
             dims="parties_complete",
         )
-        # popularity_effect = ZeroSumNormal(
-        #     "popularity_effect",
-        #     sigma=0.1,
-        #     dims="parties_complete",
-        # )
+        popularity_effect = ZeroSumNormal(
+            "popularity_effect",
+            sigma=0.1,
+            dims="parties_complete",
+        )
         incumbency_effect = pm.Normal("incumbency_effect", sigma=0.1)
         return (
             unemployment_effect,
             gas_effect,
-            # popularity_effect,
+            popularity_effect,
             incumbency_effect,
         )
 
@@ -678,7 +678,7 @@ class ModelBuilder:
         election_party_time_effect: pm.Distribution,
         unemployment_effect: pm.Distribution,
         gas_effect: pm.Distribution,
-        # popularity_effect: pm.Distribution,
+        popularity_effect: pm.Distribution,
         incumbency_effect: pm.Distribution,
         house_effects: pm.Distribution,
         house_election_effects: pm.Distribution,
@@ -696,7 +696,7 @@ class ModelBuilder:
                 data_containers["stdz_unemp"][:, None], unemployment_effect[None, :]
             )
             + aet.dot(data_containers["stdz_gas"][:, None], gas_effect[None, :])
-            # + aet.dot(data_containers["stdz_pop"][:, None], popularity_effect[None, :])
+            + aet.dot(data_containers["stdz_pop"][:, None], popularity_effect[None, :])
             + data_containers["incumbency_index"] * incumbency_effect
         )
         pm.Deterministic(
@@ -722,9 +722,9 @@ class ModelBuilder:
                 data_containers["election_unemp"][:, None], unemployment_effect[None, :]
             )
             + aet.dot(data_containers["election_gas"][:, None], gas_effect[None, :])
-            # + aet.dot(
-            #     data_containers["election_pop"][:, None], popularity_effect[None, :]
-            # )
+            + aet.dot(
+                data_containers["election_pop"][:, None], popularity_effect[None, :]
+            )
             + data_containers["election_incumbent"] * incumbency_effect
         )
 
