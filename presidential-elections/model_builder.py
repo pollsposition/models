@@ -6,16 +6,13 @@ import pandas as pd
 import pymc3 as pm
 
 from gpapproximation import make_gp_basis
-from posteriorplots import predictive_plot, retrodictive_plot
 from zerosumnormal import ZeroSumNormal
 
-# Aesara will replace theano in pymc3 version 4.0
-try:
-    import aesara.tensor as aet
-    from aesara import sparse as aesara_sparse
-except ImportError:
+# Aesara will replace Theano in PyMC 4.0
+if pm.math.erf.__module__.split(".")[0] == "theano":
     import theano.tensor as aet
-    from theano import sparse as aesara_sparse
+else:
+    import aesara.tensor as aet
 
 
 def dates_to_idx(timelist, reference_date):
@@ -213,11 +210,13 @@ class ModelBuilder:
         return polls_train, polls_test
 
     def _load_predictors(self):
+        self.unemployment_data = self._load_unemployment()
         self.polls_train, self.polls_test, self.results_mult = self._merge_with_data(
-            self._load_unemployment(), freq="Q"
+            self.unemployment_data, freq="Q"
         )
+        self.popularity_data = self._load_popularity()
         self.polls_train, self.polls_test, self.results_mult = self._merge_with_data(
-            self._load_popularity(), freq="M"
+            self.popularity_data, freq="M"
         )
         return
 
@@ -287,7 +286,7 @@ class ModelBuilder:
         return pd.concat([raw_popularity, popularity])
 
     def _standardize_continuous_predictors(self) -> Tuple[pd.DataFrame, pd.DataFrame]:
-        cont_preds = (
+        self.continuous_predictors = (
             pd.concat(
                 [
                     self.polls_train[["date", "unemployment", "mean_pop"]],
@@ -297,11 +296,13 @@ class ModelBuilder:
             .set_index("date")
             .sort_index()
         )
-        cont_preds_stdz = standardize(cont_preds)
+        cont_preds_stdz = standardize(self.continuous_predictors)
 
         return (
             cont_preds_stdz.loc[self.unique_elections],
-            cont_preds_stdz.loc[cont_preds.index.difference(self.unique_elections)],
+            cont_preds_stdz.loc[
+                self.continuous_predictors.index.difference(self.unique_elections)
+            ],
         )
 
     def build_model(
@@ -666,3 +667,102 @@ class ModelBuilder:
             posterior_predictive=post_checks,
             model=model,
         )
+
+    def forecast_election(
+        self,
+        idata: arviz.InferenceData,
+    ) -> arviz.InferenceData:
+        new_dates, oos_data = self._generate_oos_data(idata)
+        oos_data = self._join_with_predictors(oos_data)
+        forecast_data_index = pd.DataFrame(
+            data=0,  # just a placeholder
+            index=pd.MultiIndex.from_frame(oos_data),
+            columns=self.parties_complete,
+        )
+        forecast_data = forecast_data_index.reset_index()
+
+        PREDICTION_COORDS = {"observations": new_dates}
+        PREDICTION_DIMS = {
+            "latent_popularity": ["observations", "parties_complete"],
+            "noisy_popularity": ["observations", "parties_complete"],
+            "N_approve": ["observations", "parties_complete"],
+        }
+
+        forecast_model = self.build_model(polls=forecast_data, predictors=forecast_data)
+        with forecast_model:
+            ppc = pm.sample_posterior_predictive(
+                idata,
+                var_names=[
+                    "latent_popularity",
+                    "noisy_popularity",
+                    "N_approve",
+                    "latent_pop_t0",
+                    "R",
+                ],
+            )
+            ppc = arviz.from_pymc3_predictions(
+                ppc,
+                idata_orig=idata,
+                inplace=False,
+                coords=PREDICTION_COORDS,
+                dims=PREDICTION_DIMS,
+            )
+
+        return ppc
+
+    def _generate_oos_data(
+        self, idata: arviz.InferenceData
+    ) -> Tuple[pd.Index, pd.DataFrame]:
+        countdown = idata.posterior["countdown"]
+        elections = idata.posterior["elections"]
+
+        estimated_days = np.tile(countdown[::-1], reps=len(elections))
+        N_estimated_days = len(estimated_days)
+
+        new_dates = [
+            pd.date_range(
+                periods=max(countdown.data) + 1,
+                end=date,
+                freq="D",
+            ).to_series()
+            for date in elections.data
+        ]
+        new_dates = pd.concat(new_dates).index
+
+        oos_data = pd.DataFrame.from_dict(
+            {
+                "countdown": estimated_days,
+                "dateelection": np.repeat(
+                    self.unique_elections, repeats=len(countdown)
+                ),
+                "sondage": np.random.choice(
+                    self.unique_pollsters, size=N_estimated_days
+                ),
+                "samplesize": np.random.choice(
+                    self.polls_train["samplesize"].values, size=N_estimated_days
+                ),
+            }
+        )
+        oos_data["date"] = new_dates
+
+        return new_dates, oos_data.set_index("date")
+
+    def _join_with_predictors(self, oos_data: pd.DataFrame) -> pd.DataFrame:
+        oos_data["quarter"] = oos_data.index.to_period("Q")
+        oos_data["month"] = oos_data.index.to_period("M")
+
+        oos_data = oos_data.join(self.unemployment_data, on="quarter").join(
+            self.popularity_data, on="month"
+        )
+        # check no missing values
+        np.testing.assert_allclose(0, oos_data.isna().any().mean())
+
+        # stdz predictors based on observed values
+        oos_data["unemployment"] = (
+            oos_data["unemployment"] - self.continuous_predictors["unemployment"].mean()
+        ) / self.continuous_predictors["unemployment"].std()
+        oos_data["mean_pop"] = (
+            oos_data["mean_pop"] - self.continuous_predictors["mean_pop"].mean()
+        ) / self.continuous_predictors["mean_pop"].std()
+
+        return oos_data.reset_index()
