@@ -375,10 +375,7 @@ class ModelBuilder:
                 unemployment_effect,
                 gas_effect,
                 popularity_effect,
-                incumbency_effect,
                 incumbency_popularity_effect,
-                incumbency_gas_effect,
-                incumbency_unemployment_effect,
             ) = self._build_predictors()
 
             party_time_weight = self._build_party_amplitude()
@@ -401,10 +398,7 @@ class ModelBuilder:
                 unemployment_effect,
                 gas_effect,
                 popularity_effect,
-                incumbency_effect,
                 incumbency_popularity_effect,
-                incumbency_gas_effect,
-                incumbency_unemployment_effect,
                 house_effects,
                 house_election_effects,
                 data_containers,
@@ -568,8 +562,6 @@ class ModelBuilder:
         pm.Distribution,
         pm.Distribution,
         pm.Distribution,
-        pm.Distribution,
-        pm.Distribution,
     ]:
         unemployment_effect = ZeroSumNormal(
             "unemployment_effect",
@@ -586,19 +578,8 @@ class ModelBuilder:
             sigma=0.1,
             dims="parties_complete",
         )
-        incumbency_effect = pm.Normal("incumbency_effect", sigma=0.1)
         incumbency_popularity_effect = ZeroSumNormal(
             "incumbency_popularity_effect",
-            sigma=0.1,
-            dims="parties_complete",
-        )
-        incumbency_gas_effect = ZeroSumNormal(
-            "incumbency_gas_effect",
-            sigma=0.1,
-            dims="parties_complete",
-        )
-        incumbency_unemployment_effect = ZeroSumNormal(
-            "incumbency_unemployment_effect",
             sigma=0.1,
             dims="parties_complete",
         )
@@ -606,10 +587,7 @@ class ModelBuilder:
             unemployment_effect,
             gas_effect,
             popularity_effect,
-            incumbency_effect,
             incumbency_popularity_effect,
-            incumbency_gas_effect,
-            incumbency_unemployment_effect,
         )
 
     @staticmethod
@@ -703,10 +681,7 @@ class ModelBuilder:
         unemployment_effect: pm.Distribution,
         gas_effect: pm.Distribution,
         popularity_effect: pm.Distribution,
-        incumbency_effect: pm.Distribution,
-        incumbency_popularity_effect,
-        incumbency_gas_effect,
-        incumbency_unemployment_effect,
+        incumbency_popularity_effect: pm.Distribution,
         house_effects: pm.Distribution,
         house_election_effects: pm.Distribution,
         data_containers: Dict[str, pm.Data],
@@ -725,17 +700,6 @@ class ModelBuilder:
             )
             + aet.dot(data_containers["stdz_gas"][:, None], gas_effect[None, :])
             + aet.dot(data_containers["stdz_pop"][:, None], popularity_effect[None, :])
-            + data_containers["incumbency_index"] * incumbency_effect
-            + (
-                data_containers["incumbency_index"]
-                * data_containers["stdz_unemp"][:, None]
-                * incumbency_unemployment_effect[None, :]
-            )
-            + (
-                data_containers["incumbency_index"]
-                * data_containers["stdz_gas"][:, None]
-                * incumbency_gas_effect[None, :]
-            )
             + (
                 data_containers["incumbency_index"]
                 * data_containers["stdz_pop"][:, None]
@@ -767,17 +731,6 @@ class ModelBuilder:
             + aet.dot(data_containers["election_gas"][:, None], gas_effect[None, :])
             + aet.dot(
                 data_containers["election_pop"][:, None], popularity_effect[None, :]
-            )
-            + data_containers["election_incumbent"] * incumbency_effect
-            + (
-                    data_containers["election_incumbent"]
-                    * data_containers["election_unemp"][:, None]
-                    * incumbency_unemployment_effect[None, :]
-            )
-            + (
-                    data_containers["election_incumbent"]
-                    * data_containers["election_gas"][:, None]
-                    * incumbency_gas_effect[None, :]
             )
             + (
                     data_containers["election_incumbent"]
