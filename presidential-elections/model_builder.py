@@ -122,7 +122,7 @@ class ModelBuilder:
         for date in polls.dateelection.unique():
             date = pd.to_datetime(date)
             df = polls[(polls.dateelection == date) & (polls.date >= f"{date.year}-01")]
-            df["countdown"] = dates_to_idx(df["date"], date).astype(int)
+            df["countdown"] = dates_to_idx(df["date"], reference_date=date).astype(int)
             dfs.append(df)
 
         # compute "other" category
@@ -210,14 +210,65 @@ class ModelBuilder:
         return polls_train, polls_test
 
     def _load_predictors(self):
-        self.unemployment_data = self._load_unemployment()
+        self.unemployment_data = self._load_generic_predictor(
+            "https://raw.githubusercontent.com/pollsposition/data/main/predicteurs"
+            "/chomage_national_trim.csv",
+            name="unemployment",
+            freq="Q",
+            skiprows=2,
+        )
         self.polls_train, self.polls_test, self.results_mult = self._merge_with_data(
             self.unemployment_data, freq="Q"
         )
+
+        self.gaz_data = self._load_generic_predictor(
+            "https://raw.githubusercontent.com/pollsposition/data/main/predicteurs"
+            "/gazole_nat_mois.csv",
+            name="gazole",
+            freq="M",
+            skiprows=3,
+        )
+        self.polls_train, self.polls_test, self.results_mult = self._merge_with_data(
+            self.gaz_data, freq="M"
+        )
+
+        self.inflation_data = self._load_generic_predictor(
+            "https://raw.githubusercontent.com/pollsposition/data/main/predicteurs"
+            "/inflation_nat_mois.csv",
+            name="inflation",
+            freq="M",
+            skiprows=3,
+        )
+        self.polls_train, self.polls_test, self.results_mult = self._merge_with_data(
+            self.inflation_data, freq="M"
+        )
+
+        self.price_data = self._load_generic_predictor(
+            "https://raw.githubusercontent.com/pollsposition/data/main/predicteurs/ipc_nat_mois.csv",
+            name="prices",
+            freq="M",
+            skiprows=3,
+        )
+        self.polls_train, self.polls_test, self.results_mult = self._merge_with_data(
+            self.price_data, freq="M"
+        )
+
+        self.consumption_data = self._load_generic_predictor(
+            "https://raw.githubusercontent.com/pollsposition/data/main/predicteurs"
+            "/consommation_nat_trim.csv",
+            name="consumption",
+            freq="Q",
+            skiprows=3,
+        )
+        self.polls_train, self.polls_test, self.results_mult = self._merge_with_data(
+            self.consumption_data, freq="Q"
+        )
+
         self.popularity_data = self._load_popularity()
         self.polls_train, self.polls_test, self.results_mult = self._merge_with_data(
             self.popularity_data, freq="M"
         )
+        self.incumbency_index, self.election_incumbent = self._load_incumbents()
         return
 
     def _merge_with_data(
@@ -238,22 +289,23 @@ class ModelBuilder:
         return dfs
 
     @staticmethod
-    def _load_unemployment() -> pd.DataFrame:
-        unemp = pd.read_csv(
-            "https://raw.githubusercontent.com/pollsposition/data/main/predicteurs"
-            "/chomage_national_trim.csv",
-            sep=";",
-            skiprows=2,
+    def _load_generic_predictor(
+        file: str, name: str, freq: str, skiprows: int, sep: str = ";"
+    ) -> pd.DataFrame:
+        data = pd.read_csv(
+            file,
+            sep=sep,
+            skiprows=skiprows,
         ).iloc[:, [0, 1]]
-        unemp.columns = ["date", "unemployment"]
-        unemp = unemp.sort_values("date")
+        data.columns = ["date", name]
+        data = data.sort_values("date")
 
         # as timestamps variables:
-        unemp.index = pd.period_range(
-            start=unemp.date.iloc[0], periods=len(unemp), freq="Q"
+        data.index = pd.period_range(
+            start=data.date.iloc[0], periods=len(data), freq=freq
         )
 
-        return unemp.drop("date", axis=1)
+        return data.drop("date", axis=1)
 
     @staticmethod
     def _load_popularity() -> pd.DataFrame:
@@ -285,12 +337,39 @@ class ModelBuilder:
 
         return pd.concat([raw_popularity, popularity])
 
+    def _load_incumbents(self):
+        incumbents = {"chirac1": "right", "chirac2": "right", "sarkozy": "right",
+                      "hollande": "left"}
+        never_incumbents = list(set(self.parties_complete) - set(incumbents.values()))
+
+        incumbency_index = pd.get_dummies(self.polls_train["president"].replace(incumbents))
+        election_incumbent = pd.get_dummies(self.results_mult["president"].replace(incumbents))
+        for p in never_incumbents:
+            incumbency_index[p] = 0
+            election_incumbent[p] = 0
+
+        return incumbency_index[self.parties_complete], election_incumbent[self.parties_complete]
+
+
     def _standardize_continuous_predictors(self) -> Tuple[pd.DataFrame, pd.DataFrame]:
+        continuous_predictors = [
+            "date",
+            "unemployment",
+            "inflation",
+            "gazole",
+            "prices",
+            "consumption",
+            "mean_pop",
+        ]
         self.continuous_predictors = (
             pd.concat(
                 [
-                    self.polls_train[["date", "unemployment", "mean_pop"]],
-                    self.results_mult[["date", "unemployment", "mean_pop"]],
+                    self.polls_train[
+                        continuous_predictors
+                    ],
+                    self.results_mult[
+                        continuous_predictors
+                    ],
                 ]
             )
             .set_index("date")
@@ -321,7 +400,15 @@ class ModelBuilder:
             data_containers = self._build_data_containers(polls, predictors)
             party_intercept, election_party_intercept = self._build_intercepts()
             house_effects, house_election_effects = self._build_house_effects()
-            unemployment_effect, popularity_effect = self._build_predictors()
+            (
+                unemployment_effect,
+                inflation_effect,
+                gas_effect,
+                price_effect,
+                consumption_effect,
+                #popularity_effect,
+                incumbency_effect,
+            ) = self._build_predictors()
 
             party_time_weight = self._build_party_amplitude()
             election_party_time_weight = self._build_election_party_amplitude()
@@ -341,7 +428,12 @@ class ModelBuilder:
                 party_time_effect,
                 election_party_time_effect,
                 unemployment_effect,
-                popularity_effect,
+                inflation_effect,
+                gas_effect,
+                price_effect,
+                consumption_effect,
+                #popularity_effect,
+                incumbency_effect,
                 house_effects,
                 house_election_effects,
                 data_containers,
@@ -401,20 +493,70 @@ class ModelBuilder:
                 campaign_predictors["unemployment"].to_numpy(),
                 dims="observations",
             ),
+            stdz_inflation=pm.Data(
+                "stdz_inflation",
+                campaign_predictors["inflation"].to_numpy(),
+                dims="observations",
+            ),
+            stdz_gas=pm.Data(
+                "stdz_gas",
+                campaign_predictors["gazole"].to_numpy(),
+                dims="observations",
+            ),
+            stdz_price=pm.Data(
+                "stdz_price",
+                campaign_predictors["prices"].to_numpy(),
+                dims="observations",
+            ),
+            stdz_consumption=pm.Data(
+                "stdz_consumption",
+                campaign_predictors["consumption"].to_numpy(),
+                dims="observations",
+            ),
             stdz_pop=pm.Data(
                 "stdz_pop",
                 campaign_predictors["mean_pop"].to_numpy(),
                 dims="observations",
+            ),
+            incumbency_index =pm.Data(
+                "incumbency_index",
+                self.incumbency_index.to_numpy(),
+                dims=("observations", "parties_complete"),
             ),
             election_unemp=pm.Data(
                 "election_unemp",
                 self.results_preds["unemployment"].to_numpy(),
                 dims="elections",
             ),
+            election_inflation=pm.Data(
+                "election_inflation",
+                self.results_preds["inflation"].to_numpy(),
+                dims="elections",
+            ),
+            election_gas=pm.Data(
+                "election_gas",
+                self.results_preds["gazole"].to_numpy(),
+                dims="elections",
+            ),
+            election_price=pm.Data(
+                "election_price",
+                self.results_preds["prices"].to_numpy(),
+                dims="elections",
+            ),
+            election_consumption=pm.Data(
+                "election_consumption",
+                self.results_preds["consumption"].to_numpy(),
+                dims="elections",
+            ),
             election_pop=pm.Data(
                 "election_pop",
                 self.results_preds["mean_pop"].to_numpy(),
                 dims="elections",
+            ),
+            election_incumbent=pm.Data(
+                "election_incumbent",
+                self.election_incumbent.to_numpy(),
+                dims=("elections", "parties_complete"),
             ),
             observed_N=pm.Data(
                 "observed_N",
@@ -480,18 +622,54 @@ class ModelBuilder:
         return house_effects, house_election_effects
 
     @staticmethod
-    def _build_predictors() -> Tuple[pm.Distribution, pm.Distribution]:
+    def _build_predictors() -> Tuple[
+        pm.Distribution,
+        pm.Distribution,
+        pm.Distribution,
+        pm.Distribution,
+        pm.Distribution,
+        pm.Distribution,
+    ]:
         unemployment_effect = ZeroSumNormal(
             "unemployment_effect",
             sigma=0.1,
             dims="parties_complete",
         )
-        popularity_effect = ZeroSumNormal(
-            "popularity_effect",
+        inflation_effect = ZeroSumNormal(
+            "inflation_effect",
             sigma=0.1,
             dims="parties_complete",
         )
-        return unemployment_effect, popularity_effect
+        gas_effect = ZeroSumNormal(
+            "gas_effect",
+            sigma=0.1,
+            dims="parties_complete",
+        )
+        price_effect = ZeroSumNormal(
+            "price_effect",
+            sigma=0.1,
+            dims="parties_complete",
+        )
+        consumption_effect = ZeroSumNormal(
+            "consumption_effect",
+            sigma=0.1,
+            dims="parties_complete",
+        )
+        # popularity_effect = ZeroSumNormal(
+        #     "popularity_effect",
+        #     sigma=0.1,
+        #     dims="parties_complete",
+        # )
+        incumbency_effect = pm.Normal("incumbency_effect", sigma=0.1)
+        return (
+            unemployment_effect,
+            inflation_effect,
+            gas_effect,
+            price_effect,
+            consumption_effect,
+            #popularity_effect,
+            incumbency_effect,
+        )
 
     @staticmethod
     def _build_party_amplitude() -> pm.Distribution:
@@ -582,7 +760,12 @@ class ModelBuilder:
         party_time_effect: pm.Distribution,
         election_party_time_effect: pm.Distribution,
         unemployment_effect: pm.Distribution,
-        popularity_effect: pm.Distribution,
+        inflation_effect: pm.Distribution,
+        gas_effect: pm.Distribution,
+        price_effect: pm.Distribution,
+        consumption_effect: pm.Distribution,
+        #popularity_effect: pm.Distribution,
+        incumbency_effect: pm.Distribution,
         house_effects: pm.Distribution,
         house_election_effects: pm.Distribution,
         data_containers: Dict[str, pm.Data],
@@ -598,7 +781,17 @@ class ModelBuilder:
             + aet.dot(
                 data_containers["stdz_unemp"][:, None], unemployment_effect[None, :]
             )
-            + aet.dot(data_containers["stdz_pop"][:, None], popularity_effect[None, :])
+            + aet.dot(
+                data_containers["stdz_inflation"][:, None], inflation_effect[None, :]
+            )
+            + aet.dot(data_containers["stdz_gas"][:, None], gas_effect[None, :])
+            + aet.dot(data_containers["stdz_price"][:, None], price_effect[None, :])
+            + aet.dot(
+                data_containers["stdz_consumption"][:, None],
+                consumption_effect[None, :],
+            )
+            #+ aet.dot(data_containers["stdz_pop"][:, None], popularity_effect[None, :])
+            + data_containers["incumbency_index"] * incumbency_effect
         )
         pm.Deterministic(
             "latent_popularity",
@@ -623,8 +816,19 @@ class ModelBuilder:
                 data_containers["election_unemp"][:, None], unemployment_effect[None, :]
             )
             + aet.dot(
-                data_containers["election_pop"][:, None], popularity_effect[None, :]
+                data_containers["election_inflation"][:, None],
+                inflation_effect[None, :],
             )
+            + aet.dot(data_containers["election_gas"][:, None], gas_effect[None, :])
+            + aet.dot(data_containers["election_price"][:, None], price_effect[None, :])
+            + aet.dot(
+                data_containers["election_consumption"][:, None],
+                consumption_effect[None, :],
+            )
+            # + aet.dot(
+            #     data_containers["election_pop"][:, None], popularity_effect[None, :]
+            # )
+            + data_containers["election_incumbent"] * incumbency_effect
         )
 
         return (
