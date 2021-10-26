@@ -221,7 +221,7 @@ class ModelBuilder:
             self.unemployment_data, freq="Q"
         )
 
-        self.gaz_data = self._load_generic_predictor(
+        self.gas_data = self._load_generic_predictor(
             "https://raw.githubusercontent.com/pollsposition/data/main/predicteurs"
             "/gazole_nat_mois.csv",
             name="gazole",
@@ -229,7 +229,7 @@ class ModelBuilder:
             skiprows=3,
         )
         self.polls_train, self.polls_test, self.results_mult = self._merge_with_data(
-            self.gaz_data, freq="M"
+            self.gas_data, freq="M"
         )
 
         self.popularity_data = self._load_popularity()
@@ -331,7 +331,6 @@ class ModelBuilder:
 
     def _standardize_continuous_predictors(self) -> Tuple[pd.DataFrame, pd.DataFrame]:
         continuous_predictors = [
-            "date",
             "unemployment",
             "gazole",
             "mean_pop",
@@ -339,8 +338,8 @@ class ModelBuilder:
         self.continuous_predictors = (
             pd.concat(
                 [
-                    self.polls_train[continuous_predictors],
-                    self.results_mult[continuous_predictors],
+                    self.polls_train[["date"] + continuous_predictors],
+                    self.results_mult[["date"] + continuous_predictors],
                 ]
             )
             .set_index("date")
@@ -356,7 +355,10 @@ class ModelBuilder:
         )
 
     def build_model(
-        self, polls: pd.DataFrame = None, predictors: pd.DataFrame = None
+        self,
+        polls: pd.DataFrame = None,
+        continuous_predictors: pd.DataFrame = None,
+        incumbents: pd.DataFrame = None,
     ) -> pm.Model:
         """Build and return a pymc3 model."""
         (
@@ -368,7 +370,9 @@ class ModelBuilder:
 
         with pm.Model(coords=self.coords) as model:
 
-            data_containers = self._build_data_containers(polls, predictors)
+            data_containers = self._build_data_containers(
+                polls, continuous_predictors, incumbents
+            )
             party_intercept, election_party_intercept = self._build_intercepts()
             house_effects, house_election_effects = self._build_house_effects()
             (
@@ -439,13 +443,18 @@ class ModelBuilder:
         return pollster_id, countdown_id, election_id, COORDS
 
     def _build_data_containers(
-        self, polls: pd.DataFrame = None, campaign_predictors: pd.DataFrame = None
+        self,
+        polls: pd.DataFrame = None,
+        campaign_predictors: pd.DataFrame = None,
+        incumbents: pd.DataFrame = None,
     ) -> Dict[str, pm.Data]:
 
         if polls is None:
             polls = self.polls_train
         if campaign_predictors is None:
             campaign_predictors = self.campaign_preds
+        if incumbents is None:
+            incumbents = self.incumbency_index
 
         return dict(
             election_idx=pm.Data("election_idx", self.election_id, dims="observations"),
@@ -470,7 +479,7 @@ class ModelBuilder:
             ),
             incumbency_index=pm.Data(
                 "incumbency_index",
-                self.incumbency_index.to_numpy(),
+                incumbents.to_numpy(),
                 dims=("observations", "parties_complete"),
             ),
             election_unemp=pm.Data(
@@ -733,9 +742,9 @@ class ModelBuilder:
                 data_containers["election_pop"][:, None], popularity_effect[None, :]
             )
             + (
-                    data_containers["election_incumbent"]
-                    * data_containers["election_pop"][:, None]
-                    * incumbency_popularity_effect[None, :]
+                data_containers["election_incumbent"]
+                * data_containers["election_pop"][:, None]
+                * incumbency_popularity_effect[None, :]
             )
         )
 
@@ -780,18 +789,24 @@ class ModelBuilder:
             model=model,
         )
 
-    def forecast_election(
-        self,
-        idata: arviz.InferenceData,
-    ) -> arviz.InferenceData:
+    def forecast_election(self, idata: arviz.InferenceData) -> arviz.InferenceData:
         new_dates, oos_data = self._generate_oos_data(idata)
-        oos_data = self._join_with_predictors(oos_data)
+        oos_data = self._join_with_continuous_predictors(oos_data)
         forecast_data_index = pd.DataFrame(
             data=0,  # just a placeholder
             index=pd.MultiIndex.from_frame(oos_data),
             columns=self.parties_complete,
         )
         forecast_data = forecast_data_index.reset_index()
+
+        incumbents_oos = pd.DataFrame(
+            np.repeat(
+                self.election_incumbent.to_numpy(),
+                repeats=len(idata.posterior["countdown"]),
+                axis=0,
+            ),
+            columns=self.parties_complete,
+        )
 
         PREDICTION_COORDS = {"observations": new_dates}
         PREDICTION_DIMS = {
@@ -800,9 +815,13 @@ class ModelBuilder:
             "N_approve": ["observations", "parties_complete"],
         }
 
-        forecast_model = self.build_model(polls=forecast_data, predictors=forecast_data)
+        forecast_model = self.build_model(
+            polls=forecast_data,
+            continuous_predictors=forecast_data,
+            incumbents=incumbents_oos,
+        )
         with forecast_model:
-            ppc = pm.sample_posterior_predictive(
+            ppc = pm.fast_sample_posterior_predictive(
                 idata,
                 var_names=[
                     "latent_popularity",
@@ -859,12 +878,14 @@ class ModelBuilder:
 
         return new_dates, oos_data.set_index("date")
 
-    def _join_with_predictors(self, oos_data: pd.DataFrame) -> pd.DataFrame:
+    def _join_with_continuous_predictors(self, oos_data: pd.DataFrame) -> pd.DataFrame:
         oos_data["quarter"] = oos_data.index.to_period("Q")
         oos_data["month"] = oos_data.index.to_period("M")
 
-        oos_data = oos_data.join(self.unemployment_data, on="quarter").join(
-            self.popularity_data, on="month"
+        oos_data = (
+            oos_data.join(self.unemployment_data, on="quarter")
+            .join(self.popularity_data, on="month")
+            .join(self.gas_data, on="month")
         )
         # check no missing values
         np.testing.assert_allclose(0, oos_data.isna().any().mean())
