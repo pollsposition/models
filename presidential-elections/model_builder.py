@@ -5,8 +5,8 @@ import numpy as np
 import pandas as pd
 import pymc3 as pm
 
-from gpapproximation import make_gp_basis
-from zerosumnormal import ZeroSumNormal
+from utils.gpapproximation import make_gp_basis
+from utils.zerosumnormal import ZeroSumNormal
 
 # Aesara will replace Theano in PyMC 4.0
 if pm.math.erf.__module__.split(".")[0] == "theano":
