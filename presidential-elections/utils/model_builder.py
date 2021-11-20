@@ -400,8 +400,11 @@ class ModelBuilder:
                 polls, continuous_predictors, incumbents
             )
             party_intercept, election_party_intercept = self._build_intercepts()
-            # poll_bias, house_effects, poll_election_bias, house_election_effects = self._build_house_effects()
-            poll_bias, house_effects, house_election_effects = self._build_house_effects()
+            (
+                poll_bias,
+                house_effects,
+                house_election_effects,
+            ) = self._build_house_effects()
             # (
             #     unemployment_effect,
             #     gas_effect,
@@ -432,7 +435,6 @@ class ModelBuilder:
                 # incumbency_popularity_effect,  # with non-stdz popularity?
                 poll_bias,
                 house_effects,
-                # poll_election_bias,
                 house_election_effects,
                 data_containers,
             )
@@ -586,26 +588,15 @@ class ModelBuilder:
 
     @staticmethod
     def _build_house_effects() -> Tuple[
-        pm.Distribution, pm.Distribution, pm.Distribution, pm.Distribution
+        pm.Distribution, pm.Distribution, pm.Distribution
     ]:
-        poll_bias = ZeroSumNormal(  # equivalent to no ZeroSum on pollsters in house_effects
-            "poll_bias",
-            sigma=0.1,
-            dims="parties_complete",
+        poll_bias = (
+            ZeroSumNormal(  # equivalent to no ZeroSum on pollsters in house_effects
+                "poll_bias",
+                sigma=0.1,
+                dims="parties_complete",
+            )
         )
-        #
-        # poll_election_bias_sd = pm.HalfNormal("poll_election_bias_sd", 0.1)#, dims="parties_complete")
-        # poll_election_bias_raw = ZeroSumNormal(
-        #     "poll_election_bias_raw",
-        #     dims=("elections", "parties_complete"),
-        #     zerosum_axes=(0, 1),
-        # )
-        # poll_election_bias = pm.Deterministic(
-        #     # equivalent to no ZeroSum on elections in house_election_effects
-        #     "poll_election_bias",
-        #     poll_election_bias_sd[None, ...] * poll_election_bias_raw,
-        #     dims=("elections", "parties_complete"),
-        # )
 
         house_effects = ZeroSumNormal(
             "house_effects",
@@ -628,7 +619,6 @@ class ModelBuilder:
             dims=("pollsters", "parties_complete", "elections"),
         )
 
-        # return poll_bias, house_effects, poll_election_bias, house_election_effects
         return poll_bias, house_effects, house_election_effects
 
     @staticmethod
@@ -767,7 +757,6 @@ class ModelBuilder:
         # incumbency_popularity_effect: pm.Distribution,
         poll_bias: pm.Distribution,
         house_effects: pm.Distribution,
-        # poll_election_bias: pm.Distribution,
         house_election_effects: pm.Distribution,
         data_containers: Dict[str, pm.Data],
     ) -> Tuple[pm.Distribution, pm.Distribution]:
@@ -800,7 +789,6 @@ class ModelBuilder:
             latent_mu
             + poll_bias[None, :]
             + house_effects[data_containers["pollster_idx"]]
-            # + poll_election_bias[data_containers["election_idx"]]
             + house_election_effects[
                 data_containers["pollster_idx"], :, data_containers["election_idx"]
             ]
