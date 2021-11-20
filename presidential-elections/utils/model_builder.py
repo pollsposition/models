@@ -401,13 +401,14 @@ class ModelBuilder:
                 polls, continuous_predictors, incumbents
             )
             party_intercept, election_party_intercept = self._build_intercepts()
-            poll_bias, house_effects, poll_election_bias, house_election_effects = self._build_house_effects()
-            (
-                unemployment_effect,
-                gas_effect,
-                incumbency_effect,
-                incumbency_popularity_effect,
-            ) = self._build_predictors()
+            #poll_bias, house_effects, poll_election_bias, house_election_effects = self._build_house_effects()
+            house_effects, house_election_effects = self._build_house_effects()
+            # (
+            #     unemployment_effect,
+            #     gas_effect,
+            #     incumbency_effect,
+            #     incumbency_popularity_effect,
+            # ) = self._build_predictors()
 
             party_time_weight = self._build_party_amplitude()
             election_party_time_weight = self._build_election_party_amplitude()
@@ -426,18 +427,18 @@ class ModelBuilder:
                 election_party_intercept,
                 party_time_effect,
                 election_party_time_effect,
-                unemployment_effect,
-                gas_effect,
-                incumbency_effect,
-                incumbency_popularity_effect,  # with non-stdz popularity?
-                poll_bias,
+                # unemployment_effect,
+                # gas_effect,
+                # incumbency_effect,
+                # incumbency_popularity_effect,  # with non-stdz popularity?
+                #poll_bias,
                 house_effects,
-                poll_election_bias,
+                #poll_election_bias,
                 house_election_effects,
                 data_containers,
             )
 
-            concentration = pm.InverseGamma("concentration", mu=500, sigma=100)
+            concentration = pm.InverseGamma("concentration", mu=1000, sigma=100)
             pm.DirichletMultinomial(
                 "N_approve",
                 a=concentration * noisy_popularity,
@@ -555,20 +556,30 @@ class ModelBuilder:
 
     @staticmethod
     def _build_intercepts() -> Tuple[pm.Distribution, pm.Distribution]:
-        party_intercept_sd = pm.HalfNormal("party_intercept_sd", 0.3)
-        party_intercept = ZeroSumNormal(
-            "party_intercept", sigma=party_intercept_sd, dims="parties_complete"
+        party_intercept_sd = pm.HalfNormal("party_intercept_sd", 0.15)
+        #party_intercept_sd = pm.InverseGamma("party_intercept_sd", mu=2, sigma=1)
+        party_intercept_raw = ZeroSumNormal(
+            "party_intercept_raw", sigma=1, dims="parties_complete"
         )
+        party_intercept = pm.Deterministic("party_intercept", party_intercept_sd * party_intercept_raw,
+                                           dims="parties_complete")
+
         election_party_intercept_sd = pm.HalfNormal(
             "election_party_intercept_sd",
-            0.3,
+            0.15,
+            dims="parties_complete"
         )
-        election_party_intercept = ZeroSumNormal( # as a GP over elections to account for order?
-            "election_party_intercept",
-            sigma=election_party_intercept_sd,
+        #election_party_intercept_sd = pm.InverseGamma("election_party_intercept_sd", mu=2, sigma=1)
+        election_party_intercept_raw = ZeroSumNormal( # as a GP over elections to account for order?
+            "election_party_intercept_raw",
+            sigma=1,
             dims=("elections", "parties_complete"),
             zerosum_axes=(0, 1),
         )
+        election_party_intercept = pm.Deterministic("election_party_intercept",
+                                                    election_party_intercept_sd[None, :] * election_party_intercept_raw,
+                                                    dims=("elections", "parties_complete"),)
+        # https://github.com/pollsposition/models/pull/15/files
 
         return party_intercept, election_party_intercept
 
@@ -576,27 +587,34 @@ class ModelBuilder:
     def _build_house_effects() -> Tuple[
         pm.Distribution, pm.Distribution, pm.Distribution, pm.Distribution
     ]:
-        poll_bias_sd = pm.HalfNormal("poll_bias_sd", 0.05)
-        poll_bias = poll_bias_sd * ZeroSumNormal(  # equivalent to no ZeroSum on pollsters below
-            "poll_bias",
-            sigma=1,
-            dims="parties_complete",
-        )
-        house_effects_sd = pm.HalfNormal("house_effects_sd", 0.05)
-        house_effects = house_effects_sd * ZeroSumNormal(
+        # poll_bias = ZeroSumNormal(  # equivalent to no ZeroSum on pollsters in house_effects
+        #     "poll_bias",
+        #     sigma=0.1,
+        #     dims="parties_complete",
+        # )
+        #
+        # poll_election_bias_sd = pm.HalfNormal("poll_election_bias_sd", 0.1)#, dims="parties_complete")
+        # poll_election_bias_raw = ZeroSumNormal(
+        #     "poll_election_bias_raw",
+        #     dims=("elections", "parties_complete"),
+        #     zerosum_axes=(0, 1),
+        # )
+        # poll_election_bias = pm.Deterministic(
+        #     # equivalent to no ZeroSum on elections in house_election_effects
+        #     "poll_election_bias",
+        #     poll_election_bias_sd[None, ...] * poll_election_bias_raw,
+        #     dims=("elections", "parties_complete"),
+        # )
+
+        house_effects = ZeroSumNormal(
             "house_effects",
-            sigma=1,
+            sigma=0.3,
             dims=("pollsters", "parties_complete"),
             zerosum_axes=(0, 1),
         )
-        poll_election_bias_sd = pm.HalfNormal("poll_election_bias_sd", 0.05)
-        poll_election_bias = poll_election_bias_sd * ZeroSumNormal(
-            "poll_election_bias",
-            sigma=1,
-            dims=("elections", "parties_complete"),
-        )
+
         house_election_effects_sd = pm.HalfNormal(
-            "house_election_effects_sd", 0.05, dims=("pollsters", "parties_complete")
+            "house_election_effects_sd", 0.3, dims=("pollsters", "parties_complete")
         )
         house_election_effects_raw = ZeroSumNormal(
             "house_election_effects_raw",
@@ -609,7 +627,8 @@ class ModelBuilder:
             dims=("pollsters", "parties_complete", "elections"),
         )
 
-        return poll_bias, house_effects, poll_election_bias, house_election_effects
+        #return poll_bias, house_effects, poll_election_bias, house_election_effects
+        return house_effects, house_election_effects
 
     @staticmethod
     def _build_predictors() -> Tuple[
@@ -620,23 +639,23 @@ class ModelBuilder:
     ]:
         unemployment_effect = ZeroSumNormal(
             "unemployment_effect",
-            sigma=0.2,
+            sigma=0.3,
             dims="parties_complete",
         )
         # TODO: convert slopes to original data scale
         gas_effect = ZeroSumNormal(
             "gas_effect",
-            sigma=0.2,
+            sigma=0.3,
             dims="parties_complete",
         )
         incumbency_effect = ZeroSumNormal(
             "incumbency_effect",
-            sigma=0.2,
+            sigma=0.3,
             dims="parties_complete",
         )
         incumbency_popularity_effect = ZeroSumNormal(
             "incumbency_popularity_effect",
-            sigma=0.2,
+            sigma=0.3,
             dims="parties_complete",
         )
         return (
@@ -650,7 +669,7 @@ class ModelBuilder:
     def _build_party_amplitude() -> pm.Distribution:
         lsd_intercept = pm.Normal("lsd_intercept", sigma=0.3)
         lsd_party_effect = ZeroSumNormal(
-            "lsd_party_effect_1", sigma=0.2, dims="parties_complete"
+            "lsd_party_effect_party_amplitude", sigma=0.1, dims="parties_complete"
         )
         return pm.Deterministic(
             "party_time_weight",
@@ -661,12 +680,12 @@ class ModelBuilder:
     @staticmethod
     def _build_election_party_amplitude() -> pm.Distribution:
         lsd_party_effect = ZeroSumNormal(
-            "lsd_party_effect_2", sigma=0.3, dims="parties_complete"
+            "lsd_party_effect_election_party_amplitude", sigma=0.3, dims="parties_complete"
         )
         lsd_election_effect = ZeroSumNormal(
             "lsd_election_effect", sigma=0.3, dims="elections"
         )
-        lsd_election_party_sd = pm.HalfNormal("lsd_election_party_sd", 0.2)
+        lsd_election_party_sd = pm.HalfNormal("lsd_election_party_sd", 0.15)
         lsd_election_party_raw = ZeroSumNormal(
             "lsd_election_party_raw",
             dims=("parties_complete", "elections"),
@@ -696,6 +715,7 @@ class ModelBuilder:
 
         party_time_coefs_raw = ZeroSumNormal(
             "party_time_coefs_raw",
+            sigma=1,
             dims=(gp_basis_dim, "parties_complete"),
             zerosum_axes=-1,
         )
@@ -716,15 +736,15 @@ class ModelBuilder:
         election_party_time_weight: pm.Distribution,
     ) -> pm.Distribution:
 
-        election_party_time_coefs = ZeroSumNormal(
-            "election_party_time_coefs",
-            sigma=election_party_time_weight[None, ...],
+        election_party_time_coefs_raw = ZeroSumNormal(
+            "election_party_time_coefs_raw",
+            sigma=1,
             dims=(gp_basis_dim, "parties_complete", "elections"),
             zerosum_axes=(1, 2),
         )
         return pm.Deterministic(
             "election_party_time_effect",
-            aet.tensordot(gp_basis_funcs, election_party_time_coefs, axes=(1, 0)),
+            aet.tensordot(gp_basis_funcs, election_party_time_weight[None, ...] * election_party_time_coefs_raw, axes=(1, 0)),
             dims=("countdown", "parties_complete", "elections"),
         )
 
@@ -734,13 +754,13 @@ class ModelBuilder:
         election_party_intercept: pm.Distribution,
         party_time_effect: pm.Distribution,
         election_party_time_effect: pm.Distribution,
-        unemployment_effect: pm.Distribution,
-        gas_effect: pm.Distribution,
-        incumbency_effect: pm.Distribution,
-        incumbency_popularity_effect: pm.Distribution,
-        poll_bias: pm.Distribution,
+        # unemployment_effect: pm.Distribution,
+        # gas_effect: pm.Distribution,
+        # incumbency_effect: pm.Distribution,
+        # incumbency_popularity_effect: pm.Distribution,
+        #poll_bias: pm.Distribution,
         house_effects: pm.Distribution,
-        poll_election_bias: pm.Distribution,
+        #poll_election_bias: pm.Distribution,
         house_election_effects: pm.Distribution,
         data_containers: Dict[str, pm.Data],
     ) -> Tuple[pm.Distribution, pm.Distribution]:
@@ -753,16 +773,16 @@ class ModelBuilder:
             + election_party_time_effect[
                 data_containers["countdown_idx"], :, data_containers["election_idx"]
             ]
-            + aet.dot(
-                data_containers["stdz_unemp"][:, None], unemployment_effect[None, :]
-            )
-            + aet.dot(data_containers["stdz_gas"][:, None], gas_effect[None, :])
-            + data_containers["incumbency_index"] * incumbency_effect[None, :]
-            + (
-                data_containers["incumbency_index"]
-                * data_containers["stdz_pop"][:, None]
-                * incumbency_popularity_effect[None, :]
-            )
+            # + aet.dot(
+            #     data_containers["stdz_unemp"][:, None], unemployment_effect[None, :]
+            # )
+            # + aet.dot(data_containers["stdz_gas"][:, None], gas_effect[None, :])
+            # + data_containers["incumbency_index"] * incumbency_effect[None, :]
+            # + (
+            #     data_containers["incumbency_index"]
+            #     * data_containers["stdz_pop"][:, None]
+            #     * incumbency_popularity_effect[None, :]
+            # )
         )
         pm.Deterministic(
             "latent_popularity",
@@ -771,9 +791,9 @@ class ModelBuilder:
         )
         noisy_mu = (
             latent_mu
-            + poll_bias[None, :]
+            #+ poll_bias[None, :]
             + house_effects[data_containers["pollster_idx"]]
-            + poll_election_bias[data_containers["election_idx"]]
+            #+ poll_election_bias[data_containers["election_idx"]]
             + house_election_effects[
                 data_containers["pollster_idx"], :, data_containers["election_idx"]
             ]
@@ -785,16 +805,16 @@ class ModelBuilder:
             + election_party_intercept
             + party_time_effect[0]
             + election_party_time_effect[0].T
-            + aet.dot(
-                data_containers["election_unemp"][:, None], unemployment_effect[None, :]
-            )
-            + aet.dot(data_containers["election_gas"][:, None], gas_effect[None, :])
-            + data_containers["election_incumbent"] * incumbency_effect[None, :]
-            + (
-                data_containers["election_incumbent"]
-                * data_containers["election_pop"][:, None]
-                * incumbency_popularity_effect[None, :]
-            )
+            # + aet.dot(
+            #     data_containers["election_unemp"][:, None], unemployment_effect[None, :]
+            # )
+            # + aet.dot(data_containers["election_gas"][:, None], gas_effect[None, :])
+            # + data_containers["election_incumbent"] * incumbency_effect[None, :]
+            # + (
+            #     data_containers["election_incumbent"]
+            #     * data_containers["election_pop"][:, None]
+            #     * incumbency_popularity_effect[None, :]
+            # )
         )
 
         return (
@@ -886,6 +906,7 @@ class ModelBuilder:
             ppc = pm.fast_sample_posterior_predictive(
                 idata,
                 var_names=[
+                    "party_intercept",
                     "latent_popularity",
                     "noisy_popularity",
                     "N_approve",
@@ -931,8 +952,11 @@ class ModelBuilder:
                 "sondage": np.random.choice(
                     self.unique_pollsters, size=N_estimated_days
                 ),
+                # "samplesize": np.random.choice(
+                #     self.polls_train["samplesize"].values, size=N_estimated_days
+                # ),
                 "samplesize": np.random.choice(
-                    self.polls_train["samplesize"].values, size=N_estimated_days
+                    self.results_oos["samplesize"].values, size=N_estimated_days
                 ),
             }
         )
