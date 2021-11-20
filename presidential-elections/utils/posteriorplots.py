@@ -5,6 +5,9 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 import seaborn as sns
+from scipy.special import softmax
+
+colors = sns.color_palette(as_cmap=True)
 
 
 def retrodictive_plot(
@@ -25,22 +28,21 @@ def retrodictive_plot(
         axes = axes.ravel()
         axes[-1].remove()
 
-    colors = sns.color_palette("rocket", n_colors=len(parties_complete), as_cmap=False)
-
     N = trace.constant_data["observed_N"]
     if group == "posterior":
         pp = trace.posterior_predictive
-        POST_MEANS_POP = pp["latent_popularity"].mean(("chain", "draw"))
-        HDI_POP = arviz.hdi(pp)["latent_popularity"]
+        POST_MEDIANS = pp["latent_popularity"].median(("chain", "draw"))
+        STACKED_POP = pp["latent_popularity"].stack(sample=("chain", "draw"))
 
     elif group == "prior":
         prior = trace.prior
         pp = trace.prior_predictive
-        POST_MEANS_POP = prior["latent_popularity"].mean(("chain", "draw"))
-        HDI_POP = arviz.hdi(prior)["latent_popularity"]
+        POST_MEDIANS = prior["latent_popularity"].median(("chain", "draw"))
+        STACKED_POP = prior["latent_popularity"].stack(sample=("chain", "draw"))
 
-    POST_MEANS = (pp["N_approve"] / N).mean(("chain", "draw"))
+    POST_MEDIANS_MULT = (pp["N_approve"] / N).median(("chain", "draw"))
     HDI = arviz.hdi(pp)["N_approve"] / N
+    SAMPLES = np.random.choice(range(len(STACKED_POP.sample)), size=1000)
 
     for i, p in enumerate(parties_complete):
         if group == "posterior":
@@ -51,6 +53,13 @@ def retrodictive_plot(
                 color=colors[i],
                 alpha=0.4,
             )
+        for sample in SAMPLES:
+            axes[i].plot(
+                polls_train["date"],
+                STACKED_POP.sel(parties_complete=p).isel(sample=sample),
+                color=colors[i],
+                alpha=0.05,
+            )
         axes[i].fill_between(
             polls_train["date"],
             HDI.sel(parties_complete=p, hdi="lower"),
@@ -60,25 +69,22 @@ def retrodictive_plot(
         )
         axes[i].plot(
             polls_train["date"],
-            POST_MEANS.sel(parties_complete=p),
-            color=colors[i],
+            POST_MEDIANS_MULT.sel(parties_complete=p),
+            color="black",
+            ls="--",
+            lw=3,
+            label="Noisy Popularity",
         )
         axes[i].plot(
             polls_train["date"],
-            POST_MEANS_POP.sel(parties_complete=p),
-            color=colors[i],
-            label="Mean Popularity",
-        )
-        axes[i].fill_between(
-            polls_train["date"],
-            HDI_POP.sel(parties_complete=p, hdi="lower"),
-            HDI_POP.sel(parties_complete=p, hdi="higher"),
-            color=colors[i],
-            alpha=0.4,
-            label="HDI Popularity",
+            POST_MEDIANS.sel(parties_complete=p),
+            color="grey",
+            lw=3,
+            label="Latent Popularity",
         )
         axes[i].tick_params(axis="x", labelrotation=45, labelsize=10)
         axes[i].set(title=p.title())
+        axes[i].legend(fontsize=9, ncol=2)
     plt.suptitle(f"{group.title()} Predictive Check", fontsize=16, fontweight="bold")
 
 
@@ -107,23 +113,18 @@ def predictive_plot(
         test_cutoff = election_date - test_cutoff
 
     if len(parties_complete) % 2 == 0:
-        fig, axes = plt.subplots(
-            len(parties_complete) // 2, 2, figsize=(12, 12), sharey=True
-        )
+        fig, axes = plt.subplots(len(parties_complete) // 2, 2, figsize=(12, 12))
         axes = axes.ravel()
     else:
-        fig, axes = plt.subplots(
-            len(parties_complete) // 2 + 1, 2, figsize=(12, 15), sharey=True
-        )
+        fig, axes = plt.subplots(len(parties_complete) // 2 + 1, 2, figsize=(12, 15))
         axes = axes.ravel()
         axes[-1].remove()
 
-    colors = sns.color_palette(as_cmap=True)
-
     post_N = constant_data["observed_N"]
-    POST_MEANS = predictions["latent_popularity"].mean(("chain", "draw"))
+    POST_MEDIANS = predictions["latent_popularity"].median(("chain", "draw"))
     STACKED_POP = predictions["latent_popularity"].stack(sample=("chain", "draw"))
     SAMPLES = np.random.choice(range(len(STACKED_POP.sample)), size=1000)
+    POST_MEDIANS_MULT = predictions["noisy_popularity"].median(("chain", "draw"))
     HDI_MULT = arviz.hdi(predictions)["N_approve"] / post_N
 
     for i, p in enumerate(parties_complete):
@@ -132,16 +133,8 @@ def predictive_plot(
                 predictions["observations"],
                 STACKED_POP.sel(parties_complete=p).isel(sample=sample),
                 color=colors[i],
-                alpha=0.05
+                alpha=0.05,
             )
-        # axes[i].fill_between(
-        #     predictions["observations"],
-        #     HDI_POP.sel(parties_complete=p, hdi="lower"),
-        #     HDI_POP.sel(parties_complete=p, hdi="higher"),
-        #     color=colors[i],
-        #     alpha=0.4,
-        #     label="HDI Popularity",
-        # )
         axes[i].fill_between(
             predictions["observations"],
             HDI_MULT.sel(parties_complete=p, hdi="lower"),
@@ -152,17 +145,25 @@ def predictive_plot(
         )
         axes[i].plot(
             predictions["observations"],
-            POST_MEANS.sel(parties_complete=p),
+            POST_MEDIANS.sel(parties_complete=p),
             lw=3,
             color="grey",
-            label="Mean Popularity",
+            label="Latent Popularity",
+        )
+        axes[i].plot(
+            predictions["observations"],
+            POST_MEDIANS_MULT.sel(parties_complete=p),
+            lw=3,
+            ls="--",
+            color="black",
+            label="Noisy Popularity",
         )
         axes[i].plot(
             polls_train["date"],
             polls_train[p] / polls_train["samplesize"],
             "o",
             color="black",
-            alpha=0.6,
+            alpha=0.4,
             label="Observed polls",
         )
         if not polls_test.empty:
@@ -171,7 +172,7 @@ def predictive_plot(
                 polls_test[p] / polls_test["samplesize"],
                 "x",
                 color="black",
-                alpha=0.6,
+                alpha=0.4,
                 label="Unobserved polls",
             )
         axes[i].axvline(
@@ -180,16 +181,8 @@ def predictive_plot(
             ymax=1.0,
             ls="--",
             c="k",
-            alpha=0.4,
+            alpha=0.6,
             label="Test cutoff",
-        )
-        axes[i].plot(
-            election_date,
-            results[p] / 100,
-            "s",
-            color=colors[i],
-            alpha=0.8,
-            label="Result",
         )
         axes[i].axvline(
             x=election_date,
@@ -197,9 +190,28 @@ def predictive_plot(
             ymax=1.0,
             ls=":",
             c="k",
-            alpha=0.4,
+            alpha=0.6,
             label="Election Day",
+        )
+        axes[i].axhline(
+            y=(results[p] / 100).to_numpy(),
+            xmin=-0.01,
+            xmax=1.0,
+            ls="-.",
+            c="k",
+            alpha=0.6,
+            label="Result",
+        )
+        axes[i].axhline(
+            y=softmax(predictions["party_intercept"].mean(("chain", "draw"))).sel(
+                parties_complete=p
+            ),
+            xmin=-0.01,
+            xmax=1.0,
+            ls="-.",
+            c=colors[i],
+            label="Historical Average",
         )
         axes[i].tick_params(axis="x", labelrotation=45, labelsize=10)
         axes[i].set(title=p.title(), ylim=(-0.01, 0.4))
-        axes[i].legend(fontsize=10, ncol=3)
+        axes[i].legend(fontsize=9, ncol=3)
