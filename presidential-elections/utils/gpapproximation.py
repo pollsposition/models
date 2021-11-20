@@ -1,6 +1,5 @@
 from typing import List, Optional, Union
 
-import arviz
 import numpy as np
 import pandas as pd
 import pymc3 as pm
@@ -81,6 +80,8 @@ def make_centered_gp_eigendecomp(
         cov = sum(
             w * np.exp(-dist / 2) for (w, dist) in zip(variance_weight, dists)
         ) / len(lengthscale)
+        # https://gpflow.readthedocs.io/en/master/notebooks/tailor/kernel_design.html
+        # https://gist.github.com/bwengals/481e1f2bc61b0576280cf0f77b8303c6
 
     elif kernel == "periodic":
         if len(lengthscale) > 1:
