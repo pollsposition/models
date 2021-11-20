@@ -557,7 +557,6 @@ class ModelBuilder:
     @staticmethod
     def _build_intercepts() -> Tuple[pm.Distribution, pm.Distribution]:
         party_intercept_sd = pm.HalfNormal("party_intercept_sd", 0.15)
-        #party_intercept_sd = pm.InverseGamma("party_intercept_sd", mu=2, sigma=1)
         party_intercept_raw = ZeroSumNormal(
             "party_intercept_raw", sigma=1, dims="parties_complete"
         )
@@ -569,7 +568,6 @@ class ModelBuilder:
             0.15,
             dims="parties_complete"
         )
-        #election_party_intercept_sd = pm.InverseGamma("election_party_intercept_sd", mu=2, sigma=1)
         election_party_intercept_raw = ZeroSumNormal( # as a GP over elections to account for order?
             "election_party_intercept_raw",
             sigma=1,
@@ -579,7 +577,6 @@ class ModelBuilder:
         election_party_intercept = pm.Deterministic("election_party_intercept",
                                                     election_party_intercept_sd[None, :] * election_party_intercept_raw,
                                                     dims=("elections", "parties_complete"),)
-        # https://github.com/pollsposition/models/pull/15/files
 
         return party_intercept, election_party_intercept
 
@@ -952,9 +949,6 @@ class ModelBuilder:
                 "sondage": np.random.choice(
                     self.unique_pollsters, size=N_estimated_days
                 ),
-                # "samplesize": np.random.choice(
-                #     self.polls_train["samplesize"].values, size=N_estimated_days
-                # ),
                 "samplesize": np.random.choice(
                     self.results_oos["samplesize"].values, size=N_estimated_days
                 ),
