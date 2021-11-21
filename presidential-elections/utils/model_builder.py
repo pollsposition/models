@@ -557,7 +557,7 @@ class ModelBuilder:
 
     @staticmethod
     def _build_intercepts() -> Tuple[pm.Distribution, pm.Distribution]:
-        party_intercept_sd = pm.HalfNormal("party_intercept_sd", 0.15)
+        party_intercept_sd = pm.HalfNormal("party_intercept_sd", 0.5)
         party_intercept_raw = ZeroSumNormal(
             "party_intercept_raw", sigma=1, dims="parties_complete"
         )
@@ -568,7 +568,7 @@ class ModelBuilder:
         )
 
         election_party_intercept_sd = pm.HalfNormal(
-            "election_party_intercept_sd", 0.15, dims="parties_complete"
+            "election_party_intercept_sd", 0.5, dims="parties_complete"
         )
         election_party_intercept_raw = (
             ZeroSumNormal(  # as a GP over elections to account for order?
@@ -593,20 +593,20 @@ class ModelBuilder:
         poll_bias = (
             ZeroSumNormal(  # equivalent to no ZeroSum on pollsters in house_effects
                 "poll_bias",
-                sigma=0.1,
+                sigma=0.15,
                 dims="parties_complete",
             )
         )
 
         house_effects = ZeroSumNormal(
             "house_effects",
-            sigma=0.1,
+            sigma=0.15,
             dims=("pollsters", "parties_complete"),
             zerosum_axes=(0, 1),
         )
 
         house_election_effects_sd = pm.HalfNormal(
-            "house_election_effects_sd", 0.1, dims=("pollsters", "parties_complete")
+            "house_election_effects_sd", 0.15, dims=("pollsters", "parties_complete")
         )
         house_election_effects_raw = ZeroSumNormal(
             "house_election_effects_raw",
@@ -660,7 +660,7 @@ class ModelBuilder:
     def _build_party_amplitude() -> pm.Distribution:
         lsd_intercept = pm.Normal("lsd_intercept", sigma=0.3)
         lsd_party_effect = ZeroSumNormal(
-            "lsd_party_effect_party_amplitude", sigma=0.1, dims="parties_complete"
+            "lsd_party_effect_party_amplitude", sigma=0.2, dims="parties_complete"
         )
         return pm.Deterministic(
             "party_time_weight",
@@ -678,7 +678,7 @@ class ModelBuilder:
         lsd_election_effect = ZeroSumNormal(
             "lsd_election_effect", sigma=0.3, dims="elections"
         )
-        lsd_election_party_sd = pm.HalfNormal("lsd_election_party_sd", 0.15)
+        lsd_election_party_sd = pm.HalfNormal("lsd_election_party_sd", 0.2)
         lsd_election_party_raw = ZeroSumNormal(
             "lsd_election_party_raw",
             dims=("parties_complete", "elections"),
