@@ -648,9 +648,9 @@ class ModelBuilder:
 
     @staticmethod
     def _build_party_amplitude() -> pm.Distribution:
-        lsd_intercept = pm.Normal("lsd_intercept", sigma=0.15)
+        lsd_intercept = pm.Normal("lsd_intercept", sigma=0.3)
         lsd_party_effect = ZeroSumNormal(
-            "lsd_party_effect_party_amplitude", sigma=0.15, dims="parties_complete"
+            "lsd_party_effect_party_amplitude", sigma=0.2, dims="parties_complete"
         )
         return pm.Deterministic(
             "party_time_weight",
@@ -662,13 +662,13 @@ class ModelBuilder:
     def _build_election_party_amplitude() -> pm.Distribution:
         lsd_party_effect = ZeroSumNormal(
             "lsd_party_effect_election_party_amplitude",
-            sigma=0.15,
+            sigma=0.2,
             dims="parties_complete",
         )
         lsd_election_effect = ZeroSumNormal(
-            "lsd_election_effect", sigma=0.15, dims="elections"
+            "lsd_election_effect", sigma=0.2, dims="elections"
         )
-        lsd_election_party_sd = pm.HalfNormal("lsd_election_party_sd", 0.15)
+        lsd_election_party_sd = pm.HalfNormal("lsd_election_party_sd", 0.2)
         lsd_election_party_raw = ZeroSumNormal(
             "lsd_election_party_raw",
             dims=("parties_complete", "elections"),
