@@ -407,7 +407,7 @@ class ModelBuilder:
             ) = self._build_house_effects()
             (
                 unemployment_effect,
-                #gas_effect,
+                # gas_effect,
                 # incumbency_effect,
                 # incumbency_popularity_effect,
             ) = self._build_predictors()
@@ -424,13 +424,33 @@ class ModelBuilder:
                 gp_basis_funcs, gp_basis_dim, election_party_time_weight
             )
 
+            # rw_party_weight = self._build_rw_party_amplitude()
+            # rw_election_party_weight = self._build_rw_election_party_amplitude()
+            # rw_basis_funcs, rw_basis_dim = make_gp_basis(
+            #     time=self.coords["countdown"],
+            #     gp_config={
+            #         "kernel": "randomwalk",
+            #         "zerosum": True,
+            #         "variance_limit": 0.95,
+            #     },
+            #     key="rw"
+            # )
+            # rw_party_effect = self._build_rw_party(
+            #     rw_basis_funcs, rw_basis_dim, rw_party_weight
+            # )
+            # rw_election_party_effect = self._build_rw_election_party(
+            #     rw_basis_funcs, rw_basis_dim, rw_election_party_weight
+            # )
+
             noisy_popularity, latent_pop_t0 = self._build_regressions(
                 party_intercept,
                 election_party_intercept,
                 party_time_effect,
                 election_party_time_effect,
+                # rw_party_effect,
+                # rw_election_party_effect,
                 unemployment_effect,
-                #gas_effect,
+                # gas_effect,
                 # incumbency_effect,
                 # incumbency_popularity_effect,  # with non-stdz popularity?
                 poll_bias,
@@ -641,7 +661,7 @@ class ModelBuilder:
         # )
         return (
             unemployment_effect,
-            #gas_effect,
+            # gas_effect,
             # incumbency_effect,
             # incumbency_popularity_effect,
         )
@@ -689,6 +709,60 @@ class ModelBuilder:
             dims=("parties_complete", "elections"),
         )
 
+    # @staticmethod
+    # def _build_rw_party_amplitude() -> pm.Distribution:
+    #     # lsd_intercept = pm.Normal("rw_party_lsd_intercept", sigma=0.001)
+    #     # lsd_party_effect = ZeroSumNormal(
+    #     #     "rw_party_lsd_party_effect", sigma=0.0005, dims="parties_complete"
+    #     # )
+    #     #
+    #     # return pm.Deterministic(
+    #     #     "rw_party_weight",
+    #     #     aet.exp(lsd_intercept + lsd_party_effect),
+    #     #     dims="parties_complete",
+    #     # )
+    #     return pm.HalfNormal(
+    #         "rw_party_weight",
+    #         0.1,
+    #         dims="parties_complete",
+    #     )
+
+    # @staticmethod
+    # def _build_rw_election_party_amplitude() -> pm.Distribution:
+    #     # lsd_party_effect = ZeroSumNormal(
+    #     #     "rw_election_party_lsd_party_effect",
+    #     #     sigma=0.0005,
+    #     #     dims="parties_complete",
+    #     # )
+    #     # lsd_election_effect = ZeroSumNormal(
+    #     #     "rw_election_party_lsd_election_effect", sigma=0.0005, dims="elections"
+    #     # )
+    #     # lsd_election_party_sd = pm.HalfNormal("rw_election_party_lsd_election_party_sd", 0.0005)
+    #     # lsd_election_party_raw = ZeroSumNormal(
+    #     #     "rw_election_party_lsd_election_party_raw",
+    #     #     dims=("parties_complete", "elections"),
+    #     #     zerosum_axes=(0, 1),
+    #     # )
+    #     # lsd_election_party_effect = pm.Deterministic(
+    #     #     "rw_election_party_lsd_election_party_effect",
+    #     #     lsd_election_party_sd * lsd_election_party_raw,
+    #     #     dims=("parties_complete", "elections"),
+    #     # )
+    #     # return pm.Deterministic(
+    #     #     "rw_election_party_weight",
+    #     #     aet.exp(
+    #     #         lsd_party_effect[:, None]
+    #     #         + lsd_election_effect[None, :]
+    #     #         + lsd_election_party_effect
+    #     #     ),
+    #     #     dims=("parties_complete", "elections"),
+    #     # )
+    #     return pm.HalfNormal(
+    #         "rw_election_party_weight",
+    #         0.1,
+    #         dims=("parties_complete", "elections"),
+    #     )
+
     @staticmethod
     def _build_party_gp(
         gp_basis_funcs: np.ndarray,
@@ -735,14 +809,62 @@ class ModelBuilder:
             dims=("countdown", "parties_complete", "elections"),
         )
 
+    # @staticmethod
+    # def _build_rw_party(
+    #         rw_basis_funcs: np.ndarray,
+    #         rw_basis_dim: str,
+    #         rw_party_weight: pm.Distribution,
+    # ) -> pm.Distribution:
+    #
+    #     rw_party_coefs = ZeroSumNormal(
+    #         "rw_party_coefs",
+    #         sigma=rw_party_weight[None, ...],
+    #         dims=(rw_basis_dim, "parties_complete"),
+    #         zerosum_axes=-1,
+    #     )
+    #     return pm.Deterministic(
+    #         "rw_party_effect",
+    #         aet.tensordot(
+    #             rw_basis_funcs,
+    #             rw_party_coefs,
+    #             axes=(1, 0),
+    #         ),
+    #         dims=("countdown", "parties_complete"),
+    #     )
+
+    # @staticmethod
+    # def _build_rw_election_party(
+    #         rw_basis_funcs: np.ndarray,
+    #         rw_basis_dim: str,
+    #         rw_election_party_weight: pm.Distribution,
+    # ) -> pm.Distribution:
+    #
+    #     rw_election_party_coefs = ZeroSumNormal(
+    #         "rw_election_party_coefs",
+    #         sigma=rw_election_party_weight[None, ...],
+    #         dims=(rw_basis_dim, "parties_complete", "elections"),
+    #         zerosum_axes=(1, 2),
+    #     )
+    #     return pm.Deterministic(
+    #         "rw_election_party_effect",
+    #         aet.tensordot(
+    #             rw_basis_funcs,
+    #             rw_election_party_coefs,
+    #             axes=(1, 0),
+    #         ),
+    #         dims=("countdown", "parties_complete", "elections"),
+    #     )
+
     @staticmethod
     def _build_regressions(
         party_intercept: pm.Distribution,
         election_party_intercept: pm.Distribution,
         party_time_effect: pm.Distribution,
         election_party_time_effect: pm.Distribution,
+        # rw_party_effect,
+        # rw_election_party_effect,
         unemployment_effect: pm.Distribution,
-        #gas_effect: pm.Distribution,
+        # gas_effect: pm.Distribution,
         # incumbency_effect: pm.Distribution,
         # incumbency_popularity_effect: pm.Distribution,
         poll_bias: pm.Distribution,
@@ -759,10 +881,14 @@ class ModelBuilder:
             + election_party_time_effect[
                 data_containers["countdown_idx"], :, data_containers["election_idx"]
             ]
+            # + rw_party_effect[data_containers["countdown_idx"]]
+            # + rw_election_party_effect[
+            #     data_containers["countdown_idx"], :, data_containers["election_idx"]
+            #   ]
             + aet.dot(
                 data_containers["stdz_unemp"][:, None], unemployment_effect[None, :]
             )
-            #+ aet.dot(data_containers["stdz_gas"][:, None], gas_effect[None, :])
+            # + aet.dot(data_containers["stdz_gas"][:, None], gas_effect[None, :])
             # + data_containers["incumbency_index"] * incumbency_effect[None, :]
             # + (
             #     data_containers["incumbency_index"]
@@ -790,10 +916,12 @@ class ModelBuilder:
             + election_party_intercept
             + party_time_effect[0]
             + election_party_time_effect[0].T
+            # + rw_party_effect[0]
+            # + rw_election_party_effect[0].T
             + aet.dot(
                 data_containers["election_unemp"][:, None], unemployment_effect[None, :]
             )
-            #+ aet.dot(data_containers["election_gas"][:, None], gas_effect[None, :])
+            # + aet.dot(data_containers["election_gas"][:, None], gas_effect[None, :])
             # + data_containers["election_incumbent"] * incumbency_effect[None, :]
             # + (
             #     data_containers["election_incumbent"]
