@@ -25,11 +25,10 @@ def make_sum_zero_hh(N: int) -> np.ndarray:
 
 def make_centered_gp_eigendecomp(
     time: np.ndarray,
-    lengthscale: Union[float, str, List[Union[float, str]]],
+    lengthscale: Union[float, str, List[Union[float, str]]] = 1,
     variance_limit: float = 0.95,
     variance_weight: Optional[List[float]] = None,
     kernel: str = "gaussian",
-    metric: str = "euclidean",
     zerosum: bool = False,
     period: Optional[Union[float, str]] = None,
 ):
@@ -67,7 +66,9 @@ def make_centered_gp_eigendecomp(
                 lengthscale
             ), "`variance_weight` must have the same length as `lengthscale`."
             variance_weight = np.asarray(variance_weight)
-            assert np.isclose(variance_weight.sum(), 1.0), "`variance_weight` must sum to 1."
+            assert np.isclose(
+                variance_weight.sum(), 1.0
+            ), "`variance_weight` must sum to 1."
         else:
             variance_weight = np.ones_like(lengthscale)
 
@@ -80,23 +81,34 @@ def make_centered_gp_eigendecomp(
         cov = sum(
             w * np.exp(-dist / 2) for (w, dist) in zip(variance_weight, dists)
         ) / len(lengthscale)
-        # https://gpflow.readthedocs.io/en/master/notebooks/tailor/kernel_design.html
         # https://gist.github.com/bwengals/481e1f2bc61b0576280cf0f77b8303c6
 
     elif kernel == "periodic":
         if len(lengthscale) > 1:
             raise NotImplementedError(
-                f"Multiple lengthscales can only be used with the Gaussian kernel."
+                "Multiple lengthscales can only be used with the Gaussian kernel."
             )
         elif variance_weight:
             raise NotImplementedError(
-                f"`variance_weight` can only be used with the Gaussian kernel."
+                "`variance_weight` can only be used with the Gaussian kernel."
             )
         elif isinstance(period, str):
             period = pd.to_timedelta(period).to_timedelta64()
 
         dists = np.pi * ((time[:, None] - time[None, :]) / period)
         cov = np.exp(-2 * (np.sin(dists) / lengthscale) ** 2)
+
+    # https://gpflow.readthedocs.io/en/master/notebooks/tailor/kernel_design.html
+    elif kernel == "randomwalk":
+        if np.testing.assert_allclose(lengthscale, 1):
+            raise NotImplementedError(
+                f"No lengthscale needed with the Random Walk kernel."
+            )
+        elif variance_weight:
+            raise NotImplementedError(
+                f"`variance_weight` can only be used with the Gaussian kernel."
+            )
+        cov = np.minimum(X, X.T)
 
     else:
         raise ValueError(
