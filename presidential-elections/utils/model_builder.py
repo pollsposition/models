@@ -396,7 +396,7 @@ class ModelBuilder:
 
         with pm.Model(coords=self.coords) as model:
 
-            data_containers = self._build_data_containers(
+            data_containers, non_competing_parties = self._build_data_containers(
                 polls, continuous_predictors, incumbents
             )
             party_intercept, election_party_intercept = self._build_intercepts()
@@ -405,9 +405,7 @@ class ModelBuilder:
                 house_effects,
                 house_election_effects,
             ) = self._build_house_effects()
-            (
-                unemployment_effect,
-            ) = self._build_predictors()
+            unemployment_effect = self._build_predictors()
 
             party_time_weight = self._build_party_amplitude()
             election_party_time_weight = self._build_election_party_amplitude()
@@ -431,6 +429,7 @@ class ModelBuilder:
                 house_effects,
                 house_election_effects,
                 data_containers,
+                non_competing_parties,
             )
 
             concentration = pm.InverseGamma("concentration", mu=1000, sigma=100)
@@ -472,7 +471,7 @@ class ModelBuilder:
         polls: pd.DataFrame = None,
         campaign_predictors: pd.DataFrame = None,
         incumbents: pd.DataFrame = None,
-    ) -> Dict[str, pm.Data]:
+    ) -> Tuple[Dict[str, pm.Data], Dict[str, np.ndarray]]:
 
         if polls is None:
             polls = self.polls_train
@@ -481,73 +480,106 @@ class ModelBuilder:
         if incumbents is None:
             incumbents = self.incumbency_index
 
-        return dict(
-            election_idx=pm.Data("election_idx", self.election_id, dims="observations"),
-            pollster_idx=pm.Data("pollster_idx", self.pollster_id, dims="observations"),
-            countdown_idx=pm.Data(
-                "countdown_idx", self.countdown_id, dims="observations"
+        print(f"{polls = }")
+
+        non_competing_parties = {
+            "polls": polls[self.parties_complete]
+            .astype(bool)
+            .astype(int)
+            .replace(to_replace=0, value=-100)
+            .replace(to_replace=1, value=0)
+            .values,
+            "results": self.results_mult[self.parties_complete]
+            .astype(bool)
+            .astype(int)
+            .replace(to_replace=0, value=-100)
+            .replace(to_replace=1, value=0)
+            .values,
+        }
+        print(f"{non_competing_parties['polls'] = }")
+
+        return (
+            dict(
+                election_idx=pm.Data(
+                    "election_idx", self.election_id, dims="observations"
+                ),
+                pollster_idx=pm.Data(
+                    "pollster_idx", self.pollster_id, dims="observations"
+                ),
+                countdown_idx=pm.Data(
+                    "countdown_idx", self.countdown_id, dims="observations"
+                ),
+                stdz_unemp=pm.Data(
+                    "stdz_unemp",
+                    campaign_predictors["unemployment"].to_numpy(),
+                    dims="observations",
+                ),
+                stdz_gas=pm.Data(
+                    "stdz_gas",
+                    campaign_predictors["gazole"].to_numpy(),
+                    dims="observations",
+                ),
+                stdz_pop=pm.Data(
+                    "stdz_pop",
+                    campaign_predictors["mean_pop"].to_numpy(),
+                    dims="observations",
+                ),
+                incumbency_index=pm.Data(
+                    "incumbency_index",
+                    incumbents.to_numpy(),
+                    dims=("observations", "parties_complete"),
+                ),
+                election_unemp=pm.Data(
+                    "election_unemp",
+                    self.results_preds["unemployment"].to_numpy(),
+                    dims="elections",
+                ),
+                election_gas=pm.Data(
+                    "election_gas",
+                    self.results_preds["gazole"].to_numpy(),
+                    dims="elections",
+                ),
+                election_pop=pm.Data(
+                    "election_pop",
+                    self.results_preds["mean_pop"].to_numpy(),
+                    dims="elections",
+                ),
+                election_incumbent=pm.Data(
+                    "election_incumbent",
+                    self.election_incumbent.to_numpy(),
+                    dims=("elections", "parties_complete"),
+                ),
+                observed_N=pm.Data(
+                    "observed_N",
+                    polls["samplesize"].to_numpy(),
+                    dims="observations",
+                ),
+                observed_polls=pm.Data(
+                    "observed_polls",
+                    polls[self.parties_complete].to_numpy(),
+                    dims=("observations", "parties_complete"),
+                ),
+                results_N=pm.Data(
+                    "results_N",
+                    self.results_oos["samplesize"].to_numpy(),
+                    dims="elections_observed",
+                ),
+                observed_results=pm.Data(
+                    "observed_results",
+                    self.results_oos[self.parties_complete].to_numpy(),
+                    dims=("elections_observed", "parties_complete"),
+                ),
             ),
-            stdz_unemp=pm.Data(
-                "stdz_unemp",
-                campaign_predictors["unemployment"].to_numpy(),
-                dims="observations",
-            ),
-            stdz_gas=pm.Data(
-                "stdz_gas",
-                campaign_predictors["gazole"].to_numpy(),
-                dims="observations",
-            ),
-            stdz_pop=pm.Data(
-                "stdz_pop",
-                campaign_predictors["mean_pop"].to_numpy(),
-                dims="observations",
-            ),
-            incumbency_index=pm.Data(
-                "incumbency_index",
-                incumbents.to_numpy(),
-                dims=("observations", "parties_complete"),
-            ),
-            election_unemp=pm.Data(
-                "election_unemp",
-                self.results_preds["unemployment"].to_numpy(),
-                dims="elections",
-            ),
-            election_gas=pm.Data(
-                "election_gas",
-                self.results_preds["gazole"].to_numpy(),
-                dims="elections",
-            ),
-            election_pop=pm.Data(
-                "election_pop",
-                self.results_preds["mean_pop"].to_numpy(),
-                dims="elections",
-            ),
-            election_incumbent=pm.Data(
-                "election_incumbent",
-                self.election_incumbent.to_numpy(),
-                dims=("elections", "parties_complete"),
-            ),
-            observed_N=pm.Data(
-                "observed_N",
-                polls["samplesize"].to_numpy(),
-                dims="observations",
-            ),
-            observed_polls=pm.Data(
-                "observed_polls",
-                polls[self.parties_complete].to_numpy(),
-                dims=("observations", "parties_complete"),
-            ),
-            results_N=pm.Data(
-                "results_N",
-                self.results_oos["samplesize"].to_numpy(),
-                dims="elections_observed",
-            ),
-            observed_results=pm.Data(
-                "observed_results",
-                self.results_oos[self.parties_complete].to_numpy(),
-                dims=("elections_observed", "parties_complete"),
-            ),
+            non_competing_parties,
         )
+        #        dict(
+        #     green={
+        #         "rows": polls.loc[
+        #             polls["dateelection"] == "2017-04-23", "green"
+        #         ].index.to_numpy(),
+        #         "columns": self.parties_complete.index("green"),
+        #     }
+        # )
 
     @staticmethod
     def _build_intercepts() -> Tuple[pm.Distribution, pm.Distribution]:
@@ -714,6 +746,7 @@ class ModelBuilder:
         house_effects: pm.Distribution,
         house_election_effects: pm.Distribution,
         data_containers: Dict[str, pm.Data],
+        non_competing_parties,
     ) -> Tuple[pm.Distribution, pm.Distribution]:
 
         # regression for polls
@@ -728,6 +761,10 @@ class ModelBuilder:
                 data_containers["stdz_unemp"][:, None], unemployment_effect[None, :]
             )
         )
+        latent_mu = latent_mu + non_competing_parties["polls"]
+        # latent_mu[
+        #     non_competing_parties['green']['rows'], non_competing_parties['green']['columns']] = aet.as_tensor_variable(-1000)
+        # latent_mu = is_competing * latent_mu # loop with slicing, matrix, sparse matrix
         pm.Deterministic(
             "latent_popularity",
             aet.nnet.softmax(latent_mu),
@@ -741,6 +778,7 @@ class ModelBuilder:
                 data_containers["pollster_idx"], :, data_containers["election_idx"]
             ]
         )
+        print(f"{aet.nnet.softmax(noisy_mu).tag.test_value = }")
 
         # regression for results
         latent_mu_t0 = (
@@ -752,6 +790,10 @@ class ModelBuilder:
                 data_containers["election_unemp"][:, None], unemployment_effect[None, :]
             )
         )
+        print(f"{latent_mu_t0.tag.test_value = }")
+        latent_mu_t0 = latent_mu_t0 + non_competing_parties["results"]
+        print(f"{latent_mu_t0.tag.test_value = }")
+        print(f"{aet.nnet.softmax(latent_mu_t0).tag.test_value = }")
 
         return (
             pm.Deterministic(
@@ -811,11 +853,14 @@ class ModelBuilder:
         new_dates, oos_data = self._generate_oos_data(idata)
         oos_data = self._join_with_continuous_predictors(oos_data)
         forecast_data_index = pd.DataFrame(
-            data=0,  # just a placeholder
+            data=1,  # just a placeholder
             index=pd.MultiIndex.from_frame(oos_data),
             columns=self.parties_complete,
         )
         forecast_data = forecast_data_index.reset_index()
+        # make sure Greens are at 0 in 2017
+        forecast_data.loc[forecast_data["dateelection"] == "2017-04-23", "green"] = 0
+        print(f"{forecast_data = }")
 
         incumbents_oos = pd.DataFrame(
             np.repeat(
