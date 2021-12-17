@@ -25,6 +25,269 @@ def standardize(series):
     return (series - series.mean()) / series.std()
 
 
+class ElectionsModel:
+    """A model to predict the outcome of the 2022 French presidential elections"""
+
+    self.parties_complete = [
+        "farleft",
+        "left",
+        "green",
+        "center",
+        "right",
+        "farright",
+        "other",
+    ]
+
+    self.gp_config = {
+        "lengthscale": lengthscale,
+        "kernel": "gaussian",
+        "zerosum": True,
+        "variance_limit": 0.95,
+        "variance_weight": variance_weight,
+    }
+
+    def _preprocess_input(self, data):
+        pass
+
+    def _build_model(self, polls):
+        with pm.Model() as model:
+
+            # --------------------------------------------------------
+            #                      HOUSE EFFECTS
+            # --------------------------------------------------------
+
+            # Systemic poll biais
+            poll_bias = (
+                ZeroSumNormal(  # equivalent to no ZeroSum on pollsters in house_effects
+                    "poll_bias",
+                    sigma=0.15,
+                    dims="parties_complete",
+                )
+            )
+
+            # House effect
+            house_effects = ZeroSumNormal(
+                "house_effects",
+                sigma=0.15,
+                dims=("pollsters", "parties_complete"),
+                zerosum_axes=(0, 1),
+            )
+
+            # Election-specific house effects
+            house_election_effects_sd = pm.HalfNormal(
+                "house_election_effects_sd",
+                0.15,
+                dims=("pollsters", "parties_complete"),
+            )
+            house_election_effects_raw = ZeroSumNormal(
+                "house_election_effects_raw",
+                dims=("pollsters", "parties_complete", "elections"),
+                zerosum_axes=(0, 1, 2),
+            )
+            house_election_effects = pm.Deterministic(
+                "house_election_effects",
+                house_election_effects_sd[..., None] * house_election_effects_raw,
+                dims=("pollsters", "parties_complete", "elections"),
+            )
+
+            # --------------------------------------------------------
+            #                 FUNDAMENTALS
+            # --------------------------------------------------------
+
+            unemployment_effect = ZeroSumNormal(
+                "unemployment_effect",
+                sigma=0.15,
+                dims="parties_complete",
+            )
+
+            # --------------------------------------------------------
+            #                     LATENT POPULARITY
+            # --------------------------------------------------------
+
+            # General levels
+            # --------------------------------------------------------
+
+            # General level of party/candidate populatity
+            party_intercept_sd = pm.HalfNormal("party_intercept_sd", 0.5)
+            party_intercept = ZeroSumNormal(
+                "party_intercept", sigma=party_intercept_sd, dims="parties_complete"
+            )
+
+            # Average level Party/candidate popularity in each election
+            election_party_intercept_sd = pm.HalfNormal(
+                "election_party_intercept_sd", 0.5, dims="parties_complete"
+            )
+            election_party_intercept = (
+                ZeroSumNormal(  # as a GP over elections to account for order?
+                    "election_party_intercept",
+                    sigma=election_party_intercept_sd[None, :],
+                    dims=("elections", "parties_complete"),
+                    zerosum_axes=(0, 1),
+                )
+            )
+
+            # Time components
+            # --------------------------------------------------------
+
+            gp_basis_funcs, gp_basis_dim = make_gp_basis(
+                time=self.coords["countdown"], gp_config=self.gp_config, key="parties"
+            )
+
+            # Candidate popularity at each time step (over every election)
+            #
+            # This implies that there is a time-trend in each election that is
+            # specific to each party and is election-independant.
+            lsd_intercept = pm.Normal("lsd_intercept", sigma=0.3)
+            lsd_party_effect = ZeroSumNormal(
+                "lsd_party_effect_party_amplitude", sigma=0.2, dims="parties_complete"
+            )
+            party_time_weight pm.Deterministic(
+                "party_time_weight",
+                aet.exp(lsd_intercept + lsd_party_effect),
+                dims="parties_complete",
+            )
+
+            party_time_coefs_raw = ZeroSumNormal(
+                "party_time_coefs_raw",
+                sigma=1,
+                dims=(gp_basis_dim, "parties_complete"),
+                zerosum_axes=-1,
+            )
+            party_time_effect = pm.Deterministic(
+                "party_time_effect",
+                aet.tensordot(
+                    gp_basis_funcs,
+                    party_time_weight[None, ...] * party_time_coefs_raw,
+                    axes=(1, 0),
+                ),
+                dims=("countdown", "parties_complete"),
+            )
+
+            # Candidate popularity at each time step in each election
+            lsd_party_effect = ZeroSumNormal(
+                "lsd_party_effect_election_party_amplitude",
+                sigma=0.2,
+                dims="parties_complete",
+            )
+            lsd_election_effect = ZeroSumNormal(
+                "lsd_election_effect", sigma=0.2, dims="elections"
+            )
+            lsd_election_party_sd = pm.HalfNormal("lsd_election_party_sd", 0.2)
+            lsd_election_party_raw = ZeroSumNormal(
+                "lsd_election_party_raw",
+                dims=("parties_complete", "elections"),
+                zerosum_axes=(0, 1),
+            )
+            lsd_election_party_effect = pm.Deterministic(
+                "lsd_election_party_effect",
+                lsd_election_party_sd * lsd_election_party_raw,
+                dims=("parties_complete", "elections"),
+            )
+            election_party_time_weight = pm.Deterministic(
+                "election_party_time_weight",
+                aet.exp(
+                    lsd_party_effect[:, None]
+                    + lsd_election_effect[None, :]
+                    + lsd_election_party_effect
+                ),
+                dims=("parties_complete", "elections"),
+            )
+            election_party_time_coefs = ZeroSumNormal(
+                "election_party_time_coefs",
+                sigma=election_party_time_weight[None, ...],
+                dims=(gp_basis_dim, "parties_complete", "elections"),
+                zerosum_axes=(1, 2),
+            )
+            election_party_time_effect = pm.Deterministic(
+                "election_party_time_effect",
+                aet.tensordot(
+                    gp_basis_funcs,
+                    election_party_time_coefs,
+                    axes=(1, 0),
+                ),
+                dims=("countdown", "parties_complete", "elections"),
+            )
+
+            # --------------------------------------------------------
+            #           LATENT POPULARITY & POLL RESULTS
+            # --------------------------------------------------------
+
+            latent_popularity = (
+                party_intercept
+                + election_party_intercept[data_containers["election_idx"]]
+                + party_time_effect[data_containers["countdown_idx"]]
+                + election_party_time_effect[
+                    data_containers["countdown_idx"], :, data_containers["election_idx"]
+                ]
+                + aet.dot(
+                    data_containers["stdz_unemp"][:, None], unemployment_effect[None, :]
+                )
+            )
+            pm.Deterministic(
+                "latent_popularity",
+                aet.nnet.softmax(latent_popularity),
+                dims=("observations", "parties_complete"),
+            )
+
+            poll_popularity = pm.Deterministic(
+                "popularity",
+                aet.nnet.softmax(
+                    latent_popularity
+                    + poll_bias[None, :]
+                    + house_effects[data_containers["pollster_idx"]]
+                    + house_election_effects[
+                        data_containers["pollster_idx"],
+                        :,
+                        data_containers["election_idx"],
+                    ]
+                ),
+                dims=("observations", "parties_complete"),
+            )
+
+            concentration = pm.InverseGamma("concentration", mu=1000, sigma=100)
+            pm.DirichletMultinomial(
+                "N_approve",
+                a=concentration * poll_popularity,
+                n=data_containers["observed_N"],
+                observed=data_containers["observed_polls"],
+                dims=("observations", "parties_complete"),
+            )
+
+            # --------------------------------------------------------
+            #          LATENT POPULARITY & FUNDAMENTALS
+            #
+            # We try to predict the results at t=0 (election day) using
+            # the latent popularities and fundamentals
+            # --------------------------------------------------------
+
+            latent_popularity_election_day = (
+                party_intercept
+                + election_party_intercept
+                + party_time_effect[0]
+                + election_party_time_effect[0].T
+                + aet.dot(
+                    data_containers["election_unemp"][:, None],
+                    unemployment_effect[None, :],
+                )
+            )
+
+            pm.Deterministic(
+                "latent_pop_t0",
+                aet.nnet.softmax(latent_popularity_election_day),
+                dims=("elections", "parties_complete"),
+            ),
+
+            pm.DirichletMultinomial(
+                "R",
+                a=concentration * latent_pop_t0[:-1],
+                n=data_containers["results_N"],
+                observed=data_containers["observed_results"],
+                dims=("elections_observed", "parties_complete"),
+            )
+
+        return model
+
+
 class ModelBuilder:
     def __init__(
         self,
