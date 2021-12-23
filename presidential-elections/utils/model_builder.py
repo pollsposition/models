@@ -432,7 +432,7 @@ class ModelBuilder:
                 non_competing_parties,
             )
 
-            concentration = pm.InverseGamma("concentration", mu=1000, sigma=100)
+            concentration = pm.InverseGamma("concentration", mu=1000, sigma=200)
             pm.DirichletMultinomial(
                 "N_approve",
                 a=concentration * noisy_popularity,
@@ -757,7 +757,7 @@ class ModelBuilder:
         )
         noisy_mu = (
             latent_mu
-            + poll_bias[None, :]
+            + poll_bias[None, :] # let bias vary during election period?
             + house_effects[data_containers["pollster_idx"]]
             + house_election_effects[
                 data_containers["pollster_idx"], :, data_containers["election_idx"]
