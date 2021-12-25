@@ -480,11 +480,10 @@ class ModelBuilder:
         if incumbents is None:
             incumbents = self.incumbency_index
 
+        is_here_polls = polls[self.parties_complete].astype(bool).astype(int)
         non_competing_parties = {
-            "polls": polls[self.parties_complete]
-            .astype(bool)
-            .astype(int)
-            .replace(to_replace=0, value=-100)
+            "polls_multiplicative": is_here_polls.values,
+            "polls_additive": is_here_polls.replace(to_replace=0, value=-100)
             .replace(to_replace=1, value=0)
             .values,
             "results": self.results_mult[self.parties_complete]
@@ -496,12 +495,8 @@ class ModelBuilder:
         }
 
         data_containers = dict(
-            election_idx=pm.Data(
-                "election_idx", self.election_id, dims="observations"
-            ),
-            pollster_idx=pm.Data(
-                "pollster_idx", self.pollster_id, dims="observations"
-            ),
+            election_idx=pm.Data("election_idx", self.election_id, dims="observations"),
+            pollster_idx=pm.Data("pollster_idx", self.pollster_id, dims="observations"),
             countdown_idx=pm.Data(
                 "countdown_idx", self.countdown_id, dims="observations"
             ),
@@ -749,7 +744,7 @@ class ModelBuilder:
                 data_containers["stdz_unemp"][:, None], unemployment_effect[None, :]
             )
         )
-        latent_mu = latent_mu + non_competing_parties["polls"]
+        #latent_mu = latent_mu + non_competing_parties["polls_additive"]
         pm.Deterministic(
             "latent_popularity",
             aet.nnet.softmax(latent_mu),
@@ -757,11 +752,12 @@ class ModelBuilder:
         )
         noisy_mu = (
             latent_mu
-            + poll_bias[None, :] # let bias vary during election period?
+            + poll_bias[None, :]  # let bias vary during election period?
             + house_effects[data_containers["pollster_idx"]]
             + house_election_effects[
                 data_containers["pollster_idx"], :, data_containers["election_idx"]
             ]
+            #* non_competing_parties["polls_multiplicative"]
         )
 
         # regression for results
@@ -774,7 +770,7 @@ class ModelBuilder:
                 data_containers["election_unemp"][:, None], unemployment_effect[None, :]
             )
         )
-        latent_mu_t0 = latent_mu_t0 + non_competing_parties["results"]
+        #latent_mu_t0 = latent_mu_t0 + non_competing_parties["results"]
 
         return (
             pm.Deterministic(
