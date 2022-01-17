@@ -405,9 +405,7 @@ class ModelBuilder:
                 house_effects,
                 house_election_effects,
             ) = self._build_house_effects()
-            (
-                unemployment_effect,
-            ) = self._build_predictors()
+            unemployment_effect = self._build_predictors()
 
             party_time_weight = self._build_party_amplitude()
             election_party_time_weight = self._build_election_party_amplitude()
