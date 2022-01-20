@@ -56,6 +56,7 @@ class ModelBuilder:
             "center",
             "right",
             "farright",
+            "zemmour",
             "other",
         ]
         self.gp_config = {
