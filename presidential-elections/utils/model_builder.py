@@ -1,3 +1,4 @@
+import json
 from typing import Dict, List, Tuple
 
 import arviz
@@ -87,7 +88,8 @@ class ModelBuilder:
     def _clean_polls(
         self,
         test_cutoff: pd.Timedelta = None,
-    ):
+    ) -> Tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame, pd.DataFrame]:
+
         polls = self._load_polls()
         results_raw, results_mult, polls = self._format_polls(
             polls, self.parties_complete
@@ -99,8 +101,21 @@ class ModelBuilder:
 
         return polls_train, polls_test, results_raw, results_mult
 
+    def _load_polls(self) -> pd.DataFrame:
+        old_polls = self._load_old_polls()
+        new_polls = self._load_2022_polls()
+
+        polls = (
+            pd.concat([old_polls, new_polls], axis=0)
+            .sort_values(["dateelection", "date", "sondage", "samplesize"])
+            .reset_index(drop=True)
+        )
+        polls["nbzemmour"] = polls["nbzemmour"].fillna(0)
+
+        return polls
+
     @staticmethod
-    def _load_polls():
+    def _load_old_polls() -> pd.DataFrame:
         polls = pd.read_csv(
             "https://raw.githubusercontent.com/pollsposition/data/main/sondages"
             "/tour1_complet_unitedfl.csv",
@@ -125,7 +140,104 @@ class ModelBuilder:
             ["dateelection", "date", "sondage", "samplesize"]
         ).reset_index(drop=True)
 
-    def _format_polls(self, polls: pd.DataFrame, parties_complete: List[str]):
+    def _load_2022_polls(self) -> pd.DataFrame:
+        with open("../../../data/sondages/presidentielles_2022.json") as f:
+            raw_polls = json.load(f)
+
+        new_polls = self._clean_up_json(raw_polls)
+        return self._format_2022_polls(new_polls)
+
+    def _clean_up_json(self, raw_polls: pd.DataFrame) -> pd.DataFrame:
+        metadata = [
+            pd.json_normalize(raw_polls["sondages"][poll])[
+                ["institut", "date_debut", "date_fin", "premier_tour"]
+            ]
+            for poll in raw_polls["sondages"].keys()
+        ]
+        metadata = pd.concat(metadata).sort_values("date_debut")
+        metadata[["date_debut", "date_fin"]] = metadata[
+            ["date_debut", "date_fin"]
+        ].apply(pd.to_datetime)
+        metadata = metadata[metadata.date_debut >= "2022-01-01"].reset_index(drop=True)
+
+        polls_temp = []
+        for _, row in metadata.iterrows():
+            poll = row["premier_tour"]
+            polls_temp.append(self.select_hypothesis(poll))
+        polls_temp = pd.concat(polls_temp).reset_index(drop=True)
+
+        # exclude certitude
+        new_polls = pd.concat([metadata, polls_temp], axis=1).drop(
+            ["premier_tour", "base", "nspp", "hypothese"], axis=1
+        )
+        return new_polls.drop(new_polls.filter(regex="certitude.").columns, axis=1)
+
+    @staticmethod
+    def select_hypothesis(poll: List) -> pd.DataFrame:
+        """
+        Select hypothesis with Taubira when present.
+        Just return poll otherwise.
+        """
+        for hypothesis in poll:
+            intentions = hypothesis["intentions"]
+            if "Christiane Taubira" in intentions.keys():
+                # this return assumes there is only one Taubira hypothesis
+                return pd.json_normalize(hypothesis)
+        return pd.json_normalize(hypothesis)
+
+    @staticmethod
+    def _format_2022_polls(new_polls: pd.DataFrame) -> pd.DataFrame:
+
+        # different renames
+        to_rename = new_polls.filter(regex="intentions\.").columns
+        new_names = (
+            new_polls.filter(regex="intentions\.")
+            .columns.str.split(".", expand=True)
+            .droplevel(0)
+        )
+        AFFILIATIONS = {
+            "Jean-Luc Mélenchon": "nbfarleft",
+            "Anne Hidalgo": "nbleft",
+            "Yannick Jadot": "nbgreen",
+            "Emmanuel Macron": "nbcenter",
+            "Valérie Pécresse": "nbright",
+            "Marine Le Pen": "nbfarright",
+            "Éric Zemmour": "nbzemmour",
+        }
+
+        new_polls = (
+            new_polls.rename(
+                columns=(
+                    {"institut": "sondage", "intentions_exprimees": "samplesize"}
+                    | dict(zip(to_rename, new_names))
+                )
+            )
+            .rename(columns=AFFILIATIONS)
+            .replace({"Harris interactive": "Harris", "Opinionway": "OpinionWay"})
+        )
+
+        # compute median date
+        new_polls["date"] = pd.to_datetime(
+            np.median(
+                new_polls[["date_debut", "date_fin"]].values.astype(np.int64), axis=1
+            )
+        )
+        new_polls["date"] = new_polls["date"].dt.date
+        new_polls["dateelection"] = pd.to_datetime("2022-04-10")
+        new_polls = new_polls.drop(["date_debut", "date_fin"], axis=1)
+
+        # aggregate other parties:
+        core_cols = ["sondage", "date", "dateelection", "samplesize"] + list(
+            AFFILIATIONS.values()
+        )
+        rest = new_polls[new_polls.columns.difference(core_cols)]
+        new_polls["nbother"] = rest.sum(axis=1)
+
+        return new_polls.drop(rest.columns, axis=1)
+
+    def _format_polls(
+        self, polls: pd.DataFrame, parties_complete: List[str]
+    ) -> Tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame]:
         # start all elections on Jan 1st
         dfs = []
         for date in polls.dateelection.unique():
@@ -201,7 +313,9 @@ class ModelBuilder:
         return df
 
     @staticmethod
-    def _train_split(polls: pd.DataFrame, test_cutoff: pd.Timedelta = None):
+    def _train_split(
+        polls: pd.DataFrame, test_cutoff: pd.Timedelta = None
+    ) -> Tuple[pd.DataFrame, pd.DataFrame]:
         last_election = polls.dateelection.unique()[-1]
         polls_train = polls[polls.dateelection != last_election]
         polls_test = polls[polls.dateelection == last_election]
