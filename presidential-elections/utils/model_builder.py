@@ -66,12 +66,13 @@ class ModelBuilder:
             "variance_weight": variance_weight,
         }
 
+        polls = self._load_polls()
         (
             self.polls_train,
             self.polls_test,
             self.results_raw,
             self.results_mult,
-        ) = self._clean_polls(test_cutoff)
+        ) = self._clean_polls(polls, test_cutoff)
 
         _, self.unique_elections = self.polls_train["dateelection"].factorize()
         _, self.unique_pollsters = self.polls_train["sondage"].factorize()
@@ -85,22 +86,6 @@ class ModelBuilder:
             self.campaign_preds,
         ) = self._standardize_continuous_predictors()
 
-    def _clean_polls(
-        self,
-        test_cutoff: pd.Timedelta = None,
-    ) -> Tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame, pd.DataFrame]:
-
-        polls = self._load_polls()
-        results_raw, results_mult, polls = self._format_polls(
-            polls, self.parties_complete
-        )
-        (
-            polls_train,
-            polls_test,
-        ) = self._train_split(polls, test_cutoff)
-
-        return polls_train, polls_test, results_raw, results_mult
-
     def _load_polls(self) -> pd.DataFrame:
         old_polls = self._load_old_polls()
         new_polls = self._load_2022_polls()
@@ -111,8 +96,15 @@ class ModelBuilder:
             .reset_index(drop=True)
         )
         polls["nbzemmour"] = polls["nbzemmour"].fillna(0)
+        polls["date"] = pd.to_datetime(polls["date"])
 
-        return polls
+        # add empty line for 2022 results
+        polls = polls.set_index("date")
+        polls.loc["2022-04-10"] = np.NaN
+        polls.loc["2022-04-10", "dateelection"] = pd.to_datetime("2022-04-10")
+        polls.loc["2022-04-10", "sondage"] = "result"
+
+        return polls.reset_index()
 
     @staticmethod
     def _load_old_polls() -> pd.DataFrame:
@@ -235,6 +227,22 @@ class ModelBuilder:
 
         return new_polls.drop(rest.columns, axis=1)
 
+    def _clean_polls(
+        self,
+        polls: pd.DataFrame,
+        test_cutoff: pd.Timedelta = None,
+    ) -> Tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame, pd.DataFrame]:
+
+        results_raw, results_mult, polls = self._format_polls(
+            polls, self.parties_complete
+        )
+        (
+            polls_train,
+            polls_test,
+        ) = self._train_split(polls, test_cutoff)
+
+        return polls_train, polls_test, results_raw, results_mult
+
     def _format_polls(
         self, polls: pd.DataFrame, parties_complete: List[str]
     ) -> Tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame]:
@@ -284,9 +292,13 @@ class ModelBuilder:
         for year, dateelection in zip(
             results_raw.dateelection.dt.year.unique(), results_raw.dateelection.unique()
         ):
-            df = pd.json_normalize(raw_json[year])[["exprimes"]]
-            df["dateelection"] = dateelection
-            jsons.append(df)
+            try:
+                df = pd.json_normalize(raw_json[year])[["exprimes"]]
+                df["dateelection"] = dateelection
+                jsons.append(df)
+            # 2022 results not available yet
+            except KeyError:
+                continue
         jsons = pd.concat(jsons)
 
         results_mult = (
@@ -343,23 +355,6 @@ class ModelBuilder:
         self.polls_train, self.polls_test, self.results_mult = self._merge_with_data(
             self.unemployment_data, freq="Q"
         )
-
-        self.gas_data = self._load_generic_predictor(
-            "https://raw.githubusercontent.com/pollsposition/data/main/predicteurs"
-            "/gazole_nat_mois.csv",
-            name="gazole",
-            freq="M",
-            skiprows=3,
-        )
-        self.polls_train, self.polls_test, self.results_mult = self._merge_with_data(
-            self.gas_data, freq="M"
-        )
-
-        self.popularity_data = self._load_popularity()
-        self.polls_train, self.polls_test, self.results_mult = self._merge_with_data(
-            self.popularity_data, freq="M"
-        )
-        self.incumbency_index, self.election_incumbent = self._load_incumbents()
         return
 
     def _merge_with_data(
@@ -398,66 +393,10 @@ class ModelBuilder:
 
         return data.drop("date", axis=1)
 
-    @staticmethod
-    def _load_popularity() -> pd.DataFrame:
-        popularity = pd.read_csv(
-            "https://raw.githubusercontent.com/pollsposition/dashboards/main/exports"
-            "/popularity_all_presidents.csv",
-            parse_dates=["month"],
-        )
-        popularity["month"] = popularity["month"].dt.to_period("M")
-        popularity = popularity.set_index("month")
-        popularity.index = popularity.index.shift(-1)
-
-        # popularity model starts from chirac2
-        raw_popularity = pd.read_csv(
-            "https://raw.githubusercontent.com/pollsposition/data/main/sondages/popularite.csv",
-            index_col=0,
-        )
-        raw_popularity = raw_popularity[raw_popularity.president == "chirac1"]
-        raw_popularity.index = pd.to_datetime(raw_popularity.index)
-
-        raw_popularity = raw_popularity.resample("M").mean()
-        raw_popularity.index = raw_popularity.index.to_period("M")
-
-        raw_popularity["president"] = "chirac1"
-        raw_popularity["mean_pop"] = raw_popularity["approve_pr"] / 100
-        raw_popularity = raw_popularity.drop(
-            ["samplesize", "approve_pr", "disapprove_pr"], axis="columns"
-        )
-
-        return pd.concat([raw_popularity, popularity])
-
-    def _load_incumbents(self):
-        incumbents = {
-            "chirac1": "right",
-            "chirac2": "right",
-            "sarkozy": "right",
-            "hollande": "left",
-        }
-        never_incumbents = list(set(self.parties_complete) - set(incumbents.values()))
-
-        incumbency_index = pd.get_dummies(
-            self.polls_train["president"].replace(incumbents)
-        )
-        election_incumbent = pd.get_dummies(
-            self.results_mult["president"].replace(incumbents)
-        )
-        for p in never_incumbents:
-            incumbency_index[p] = 0
-            election_incumbent[p] = 0
-
-        return (
-            incumbency_index[self.parties_complete],
-            election_incumbent[self.parties_complete],
-        )
-
     def _standardize_continuous_predictors(self) -> Tuple[pd.DataFrame, pd.DataFrame]:
         """Substract mean and divide by std to help with sampling and setting priors."""
         continuous_predictors = [
             "unemployment",
-            "gazole",
-            "mean_pop",
         ]
         self.continuous_predictors = (
             pd.concat(
@@ -482,7 +421,6 @@ class ModelBuilder:
         self,
         polls: pd.DataFrame = None,
         continuous_predictors: pd.DataFrame = None,
-        incumbents: pd.DataFrame = None,
     ) -> pm.Model:
         """
         Build and return a pymc3 model.
@@ -497,9 +435,6 @@ class ModelBuilder:
             A dataframe of all the continuous predictors.
             Specify only if you want to run the model on another dataset than the training one (e.g
             for out-of-sample predictions).
-        incumbents: pd.DataFrame, default None
-            A dataframe of binary variables to indicate, for each observation (i.e polls), whether
-            the candidate of each party is from the party of the incumbent president.
         """
         (
             self.pollster_id,
@@ -510,9 +445,7 @@ class ModelBuilder:
 
         with pm.Model(coords=self.coords) as model:
 
-            data_containers = self._build_data_containers(
-                polls, continuous_predictors, incumbents
-            )
+            data_containers = self._build_data_containers(polls, continuous_predictors)
             party_intercept, election_party_intercept = self._build_intercepts()
             (
                 poll_bias,
@@ -583,15 +516,12 @@ class ModelBuilder:
         self,
         polls: pd.DataFrame = None,
         campaign_predictors: pd.DataFrame = None,
-        incumbents: pd.DataFrame = None,
     ) -> Dict[str, pm.Data]:
 
         if polls is None:
             polls = self.polls_train
         if campaign_predictors is None:
             campaign_predictors = self.campaign_preds
-        if incumbents is None:
-            incumbents = self.incumbency_index
 
         return dict(
             election_idx=pm.Data("election_idx", self.election_id, dims="observations"),
@@ -604,40 +534,10 @@ class ModelBuilder:
                 campaign_predictors["unemployment"].to_numpy(),
                 dims="observations",
             ),
-            stdz_gas=pm.Data(
-                "stdz_gas",
-                campaign_predictors["gazole"].to_numpy(),
-                dims="observations",
-            ),
-            stdz_pop=pm.Data(
-                "stdz_pop",
-                campaign_predictors["mean_pop"].to_numpy(),
-                dims="observations",
-            ),
-            incumbency_index=pm.Data(
-                "incumbency_index",
-                incumbents.to_numpy(),
-                dims=("observations", "parties_complete"),
-            ),
             election_unemp=pm.Data(
                 "election_unemp",
                 self.results_preds["unemployment"].to_numpy(),
                 dims="elections",
-            ),
-            election_gas=pm.Data(
-                "election_gas",
-                self.results_preds["gazole"].to_numpy(),
-                dims="elections",
-            ),
-            election_pop=pm.Data(
-                "election_pop",
-                self.results_preds["mean_pop"].to_numpy(),
-                dims="elections",
-            ),
-            election_incumbent=pm.Data(
-                "election_incumbent",
-                self.election_incumbent.to_numpy(),
-                dims=("elections", "parties_complete"),
             ),
             observed_N=pm.Data(
                 "observed_N",
@@ -888,6 +788,8 @@ class ModelBuilder:
         model : optional
             A model previously created using `self.build_model()`.
             Build a new model if None (default)
+        var_names: List[str]
+            Variables names passed to `pm.fast_sample_posterior_predictive`
         **sampler_kwargs : dict
             Additional arguments to `pm.sample`
         """
@@ -929,15 +831,6 @@ class ModelBuilder:
         )
         forecast_data = forecast_data_index.reset_index()
 
-        incumbents_oos = pd.DataFrame(
-            np.repeat(
-                self.election_incumbent.to_numpy(),
-                repeats=len(idata.posterior["countdown"]),
-                axis=0,
-            ),
-            columns=self.parties_complete,
-        )
-
         PREDICTION_COORDS = {"observations": new_dates}
         PREDICTION_DIMS = {
             "latent_popularity": ["observations", "parties_complete"],
@@ -948,7 +841,6 @@ class ModelBuilder:
         forecast_model = self.build_model(
             polls=forecast_data,
             continuous_predictors=forecast_data,
-            incumbents=incumbents_oos,
         )
         with forecast_model:
             ppc = pm.fast_sample_posterior_predictive(
@@ -1014,11 +906,7 @@ class ModelBuilder:
         oos_data["quarter"] = oos_data.index.to_period("Q")
         oos_data["month"] = oos_data.index.to_period("M")
 
-        oos_data = (
-            oos_data.join(self.unemployment_data, on="quarter")
-            .join(self.popularity_data, on="month")
-            .join(self.gas_data, on="month")
-        )
+        oos_data = oos_data.join(self.unemployment_data, on="quarter")
         # check no missing values
         np.testing.assert_allclose(0, oos_data.isna().any().mean())
 
@@ -1026,8 +914,5 @@ class ModelBuilder:
         oos_data["unemployment"] = (
             oos_data["unemployment"] - self.continuous_predictors["unemployment"].mean()
         ) / self.continuous_predictors["unemployment"].std()
-        oos_data["mean_pop"] = (
-            oos_data["mean_pop"] - self.continuous_predictors["mean_pop"].mean()
-        ) / self.continuous_predictors["mean_pop"].std()
 
         return oos_data.reset_index()
