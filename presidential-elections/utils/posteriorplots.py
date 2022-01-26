@@ -18,7 +18,7 @@ def retrodictive_plot(
 ):
     if len(parties_complete) % 2 == 0:
         fig, axes = plt.subplots(
-            len(parties_complete) // 2, 2, figsize=(12, 12), sharey=True
+            len(parties_complete) // 2, 2, figsize=(12, 15), sharey=True
         )
         axes = axes.ravel()
     else:
@@ -113,7 +113,7 @@ def predictive_plot(
         test_cutoff = election_date - test_cutoff
 
     if len(parties_complete) % 2 == 0:
-        fig, axes = plt.subplots(len(parties_complete) // 2, 2, figsize=(12, 12))
+        fig, axes = plt.subplots(len(parties_complete) // 2, 2, figsize=(12, 15))
         axes = axes.ravel()
     else:
         fig, axes = plt.subplots(len(parties_complete) // 2 + 1, 2, figsize=(12, 15))
