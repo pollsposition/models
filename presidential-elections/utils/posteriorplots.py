@@ -92,14 +92,14 @@ def predictive_plot(
     idata: arviz.InferenceData,
     parties_complete: List[str],
     election_date: str,
-    results: pd.DataFrame,
     polls_train: pd.DataFrame,
     polls_test: pd.DataFrame,
-    #test_cutoff: pd.Timedelta = None,
+    results: pd.DataFrame = None,
+    # test_cutoff: pd.Timedelta = None,
     hdi: bool = False,
 ):
     election_date = pd.to_datetime(election_date)
-    results = results[results.dateelection == election_date]
+    # results = results[results.dateelection == election_date]
     new_dates = idata.predictions_constant_data["observations"].to_index()
     predictions = idata.predictions.sel(
         observations=new_dates[new_dates.year == int(f"{election_date.year}")]
@@ -121,13 +121,28 @@ def predictive_plot(
         axes = axes.ravel()
         axes[-1].remove()
 
-    #post_N = constant_data["observed_N"]
+    # post_N = constant_data["observed_N"]
     POST_MEDIANS = predictions["latent_popularity"].median(("chain", "draw"))
     STACKED_POP = predictions["latent_popularity"].stack(sample=("chain", "draw"))
     HDI_POP_83 = arviz.hdi(predictions, hdi_prob=0.83)["latent_popularity"]
     SAMPLES = np.random.choice(range(len(STACKED_POP.sample)), size=1000)
     POST_MEDIANS_MULT = predictions["noisy_popularity"].median(("chain", "draw"))
-    #HDI_MULT = arviz.hdi(predictions, hdi_prob=0.83)["N_approve"] / post_N
+    # HDI_MULT = arviz.hdi(predictions, hdi_prob=0.83)["N_approve"] / post_N
+
+    if election_date.year == 2022:
+        TITLES = dict(zip(
+                parties_complete,
+                [
+                    "Mélenchon",
+                    "Hidalgo",
+                    "Jadot",
+                    "Macron",
+                    "Pécresse",
+                    "Le Pen",
+                    "Zemmour",
+                    "Autre",
+                ],
+            ))
 
     for i, p in enumerate(parties_complete):
         # axes[i].fill_between(
@@ -204,15 +219,15 @@ def predictive_plot(
             alpha=0.6,
             label="Election Day",
         )
-        axes[i].axhline(
-            y=(results[p] / 100).to_numpy(),
-            xmin=-0.01,
-            xmax=1.0,
-            ls="-.",
-            c="k",
-            alpha=0.6,
-            label="Result",
-        )
+        # axes[i].axhline(
+        #     y=(results[p] / 100).to_numpy(),
+        #     xmin=-0.01,
+        #     xmax=1.0,
+        #     ls="-.",
+        #     c="k",
+        #     alpha=0.6,
+        #     label="Result",
+        # )
         axes[i].axhline(
             y=softmax(predictions["party_intercept"].mean(("chain", "draw"))).sel(
                 parties_complete=p
@@ -224,5 +239,8 @@ def predictive_plot(
             label="Historical Average",
         )
         axes[i].tick_params(axis="x", labelrotation=45, labelsize=10)
-        axes[i].set(title=p.title(), ylim=(-0.01, 0.4))
+        if TITLES:
+            axes[i].set(title=TITLES[p], ylim=(-0.01, 0.4))
+        else:
+            axes[i].set(title=p.title(), ylim=(-0.01, 0.4))
         axes[i].legend(fontsize=9, ncol=3)
