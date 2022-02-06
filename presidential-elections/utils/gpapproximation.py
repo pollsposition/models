@@ -18,7 +18,7 @@ def make_sum_zero_hh(N: int) -> np.ndarray:
     e_1[0] = 1
     a = np.ones(N)
     a /= np.sqrt(a @ a)
-    v = a + e_1
+    v = e_1 - a
     v /= np.sqrt(v @ v)
     return np.eye(N) - 2 * np.outer(v, v)
 
