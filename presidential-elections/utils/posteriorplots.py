@@ -95,7 +95,8 @@ def predictive_plot(
     results: pd.DataFrame,
     polls_train: pd.DataFrame,
     polls_test: pd.DataFrame,
-    test_cutoff: pd.Timedelta = None,
+    #test_cutoff: pd.Timedelta = None,
+    hdi: bool = False,
 ):
     election_date = pd.to_datetime(election_date)
     results = results[results.dateelection == election_date]
@@ -103,14 +104,14 @@ def predictive_plot(
     predictions = idata.predictions.sel(
         observations=new_dates[new_dates.year == int(f"{election_date.year}")]
     )
-    constant_data = idata.predictions_constant_data.sel(
-        observations=new_dates[new_dates.year == int(f"{election_date.year}")]
-    )
+    # constant_data = idata.predictions_constant_data.sel(
+    #     observations=new_dates[new_dates.year == int(f"{election_date.year}")]
+    # )
 
-    if test_cutoff is None:
-        test_cutoff = election_date - pd.Timedelta(2, "D")
-    else:
-        test_cutoff = election_date - test_cutoff
+    # if test_cutoff is None:
+    #     test_cutoff = election_date - pd.Timedelta(2, "D")
+    # else:
+    #     test_cutoff = election_date - test_cutoff
 
     if len(parties_complete) % 2 == 0:
         fig, axes = plt.subplots(len(parties_complete) // 2, 2, figsize=(12, 15))
@@ -120,42 +121,52 @@ def predictive_plot(
         axes = axes.ravel()
         axes[-1].remove()
 
-    post_N = constant_data["observed_N"]
+    #post_N = constant_data["observed_N"]
     POST_MEDIANS = predictions["latent_popularity"].median(("chain", "draw"))
     STACKED_POP = predictions["latent_popularity"].stack(sample=("chain", "draw"))
+    HDI_POP_83 = arviz.hdi(predictions, hdi_prob=0.83)["latent_popularity"]
     SAMPLES = np.random.choice(range(len(STACKED_POP.sample)), size=1000)
     POST_MEDIANS_MULT = predictions["noisy_popularity"].median(("chain", "draw"))
-    HDI_MULT = arviz.hdi(predictions)["N_approve"] / post_N
+    #HDI_MULT = arviz.hdi(predictions, hdi_prob=0.83)["N_approve"] / post_N
 
     for i, p in enumerate(parties_complete):
-        for sample in SAMPLES:
-            axes[i].plot(
+        # axes[i].fill_between(
+        #     predictions["observations"],
+        #     HDI_MULT.sel(parties_complete=p, hdi="lower"),
+        #     HDI_MULT.sel(parties_complete=p, hdi="higher"),
+        #     color=colors[i],
+        #     alpha=0.2,
+        #     label="5 in 6 chance Polls",
+        # )
+        if hdi:
+            axes[i].fill_between(
                 predictions["observations"],
-                STACKED_POP.sel(parties_complete=p).isel(sample=sample),
+                HDI_POP_83.sel(parties_complete=p, hdi="lower"),
+                HDI_POP_83.sel(parties_complete=p, hdi="higher"),
                 color=colors[i],
-                alpha=0.05,
+                alpha=0.5,
+                label="5 in 6 chance",
             )
-        axes[i].fill_between(
-            predictions["observations"],
-            HDI_MULT.sel(parties_complete=p, hdi="lower"),
-            HDI_MULT.sel(parties_complete=p, hdi="higher"),
-            color=colors[i],
-            alpha=0.3,
-            label="HDI Polls",
-        )
+        else:
+            for sample in SAMPLES:
+                axes[i].plot(
+                    predictions["observations"],
+                    STACKED_POP.sel(parties_complete=p).isel(sample=sample),
+                    color=colors[i],
+                    alpha=0.05,
+                )
         axes[i].plot(
             predictions["observations"],
             POST_MEDIANS.sel(parties_complete=p),
             lw=3,
-            color="grey",
+            color="black",
             label="Latent Popularity",
         )
         axes[i].plot(
             predictions["observations"],
             POST_MEDIANS_MULT.sel(parties_complete=p),
-            lw=3,
             ls="--",
-            color="black",
+            color="grey",
             label="Noisy Popularity",
         )
         axes[i].plot(
@@ -175,15 +186,15 @@ def predictive_plot(
                 alpha=0.4,
                 label="Unobserved polls",
             )
-        axes[i].axvline(
-            x=test_cutoff,
-            ymin=-0.01,
-            ymax=1.0,
-            ls="--",
-            c="k",
-            alpha=0.6,
-            label="Test cutoff",
-        )
+        # axes[i].axvline(
+        #     x=test_cutoff,
+        #     ymin=-0.01,
+        #     ymax=1.0,
+        #     ls="--",
+        #     c="k",
+        #     alpha=0.6,
+        #     label="Test cutoff",
+        # )
         axes[i].axvline(
             x=election_date,
             ymin=-0.01,
