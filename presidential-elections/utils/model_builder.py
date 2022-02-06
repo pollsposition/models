@@ -588,15 +588,6 @@ class ModelBuilder:
             "party_intercept", sigma=party_intercept_sd, dims="parties_complete"
         )
 
-        # shrinkage = pm.HalfNormal("election_party_intercept_sd_shrinkage", 0.5)
-        # 95% of mass btw 0.5 and 1.5. Use pm.find_constrained_prior in v4 to reproduce
-        #shrinkage = pm.Gamma("election_party_intercept_sd_shrinkage", alpha=13.12, beta=14.28)
-        # election_party_intercept_sd = pm.HalfNormal(
-        #     "election_party_intercept_sd", shrinkage, dims="parties_complete"
-        # )
-        # election_party_intercept_sd = pm.TruncatedNormal(
-        #     'election_party_intercept_sd', mu=1, sigma=shrinkage, lower=0, dims="parties_complete"
-        # )
         lsd_intercept = pm.Normal("election_party_intercept_sd_intercept", sigma=0.5)
         lsd_party_effect = ZeroSumNormal(
             "election_party_intercept_sd_party_effect", sigma=0.5, dims="parties_complete"
