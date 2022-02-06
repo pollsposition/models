@@ -56,7 +56,7 @@ class ModelBuilder:
             "center",
             "right",
             "farright",
-            "zemmour",
+            "souverainistes",
             "other",
         ]
         self.gp_config = {
@@ -96,7 +96,7 @@ class ModelBuilder:
             .sort_values(["dateelection", "date", "sondage", "samplesize"])
             .reset_index(drop=True)
         )
-        polls["nbzemmour"] = polls["nbzemmour"].fillna(0)
+        polls["nbsouverainistes"] = polls["nbsouverainistes"].fillna(0)
         polls["date"] = pd.to_datetime(polls["date"])
 
         # add empty line for 2022 results
@@ -195,7 +195,7 @@ class ModelBuilder:
             "Emmanuel Macron": "nbcenter",
             "Valérie Pécresse": "nbright",
             "Marine Le Pen": "nbfarright",
-            "Éric Zemmour": "nbzemmour",
+            "Éric Zemmour": "nbsouverainistes",
         }
 
         new_polls = (
@@ -446,7 +446,9 @@ class ModelBuilder:
 
         with pm.Model(coords=self.coords) as model:
 
-            data_containers = self._build_data_containers(polls, continuous_predictors)
+            data_containers, non_competing_parties = self._build_data_containers(
+                polls, continuous_predictors
+            )
             party_intercept, election_party_intercept = self._build_intercepts()
             (
                 poll_bias,
@@ -477,9 +479,10 @@ class ModelBuilder:
                 house_effects,
                 house_election_effects,
                 data_containers,
+                non_competing_parties
             )
 
-            concentration = pm.InverseGamma("concentration", mu=1000, sigma=100)
+            concentration = pm.InverseGamma("concentration", mu=1000, sigma=200)
             pm.DirichletMultinomial(
                 "N_approve",
                 a=concentration * noisy_popularity,
@@ -517,14 +520,28 @@ class ModelBuilder:
         self,
         polls: pd.DataFrame = None,
         campaign_predictors: pd.DataFrame = None,
-    ) -> Dict[str, pm.Data]:
+    ) -> Tuple[Dict[str, pm.Data], Dict[str, np.ndarray]]:
 
         if polls is None:
             polls = self.polls_train
         if campaign_predictors is None:
             campaign_predictors = self.campaign_preds
 
-        return dict(
+        is_here = polls[self.parties_complete].astype(bool).astype(int)
+        non_competing_parties = {
+            "polls_multiplicative": is_here.values,
+            "polls_additive": is_here.replace(to_replace=0, value=-10)
+                .replace(to_replace=1, value=0)
+                .values,
+            "results": self.results_mult[self.parties_complete]
+                .astype(bool)
+                .astype(int)
+                .replace(to_replace=0, value=-10)
+                .replace(to_replace=1, value=0)
+                .values,
+        }
+
+        data_containers = dict(
             election_idx=pm.Data("election_idx", self.election_id, dims="observations"),
             pollster_idx=pm.Data("pollster_idx", self.pollster_id, dims="observations"),
             countdown_idx=pm.Data(
@@ -562,6 +579,8 @@ class ModelBuilder:
             ),
         )
 
+        return data_containers, non_competing_parties
+
     @staticmethod
     def _build_intercepts() -> Tuple[pm.Distribution, pm.Distribution]:
         party_intercept_sd = pm.HalfNormal("party_intercept_sd", 0.5)
@@ -569,9 +588,25 @@ class ModelBuilder:
             "party_intercept", sigma=party_intercept_sd, dims="parties_complete"
         )
 
-        election_party_intercept_sd = pm.HalfNormal(
-            "election_party_intercept_sd", 0.5, dims="parties_complete"
+        # shrinkage = pm.HalfNormal("election_party_intercept_sd_shrinkage", 0.5)
+        # 95% of mass btw 0.5 and 1.5. Use pm.find_constrained_prior in v4 to reproduce
+        #shrinkage = pm.Gamma("election_party_intercept_sd_shrinkage", alpha=13.12, beta=14.28)
+        # election_party_intercept_sd = pm.HalfNormal(
+        #     "election_party_intercept_sd", shrinkage, dims="parties_complete"
+        # )
+        # election_party_intercept_sd = pm.TruncatedNormal(
+        #     'election_party_intercept_sd', mu=1, sigma=shrinkage, lower=0, dims="parties_complete"
+        # )
+        lsd_intercept = pm.Normal("election_party_intercept_sd_intercept", sigma=0.5)
+        lsd_party_effect = ZeroSumNormal(
+            "election_party_intercept_sd_party_effect", sigma=0.5, dims="parties_complete"
         )
+        election_party_intercept_sd = pm.Deterministic(
+            "election_party_intercept_sd",
+            aet.exp(lsd_intercept + lsd_party_effect),
+            dims="parties_complete"
+        )
+
         election_party_intercept = (
             ZeroSumNormal(  # as a GP over elections to account for order?
                 "election_party_intercept",
@@ -727,6 +762,7 @@ class ModelBuilder:
         house_effects: pm.Distribution,
         house_election_effects: pm.Distribution,
         data_containers: Dict[str, pm.Data],
+        non_competing_parties: Dict[str, np.ndarray],
     ) -> Tuple[pm.Distribution, pm.Distribution]:
 
         # regression for polls
@@ -741,6 +777,7 @@ class ModelBuilder:
                 data_containers["stdz_unemp"][:, None], unemployment_effect[None, :]
             )
         )
+        latent_mu = latent_mu + non_competing_parties["polls_additive"]
         pm.Deterministic(
             "latent_popularity",
             aet.nnet.softmax(latent_mu),
@@ -748,11 +785,12 @@ class ModelBuilder:
         )
         noisy_mu = (
             latent_mu
-            + poll_bias[None, :]
+            + poll_bias[None, :]  # let bias vary during election period?
             + house_effects[data_containers["pollster_idx"]]
             + house_election_effects[
                 data_containers["pollster_idx"], :, data_containers["election_idx"]
             ]
+            * non_competing_parties["polls_multiplicative"]
         )
 
         # regression for results
@@ -765,6 +803,7 @@ class ModelBuilder:
                 data_containers["election_unemp"][:, None], unemployment_effect[None, :]
             )
         )
+        latent_mu_t0 = latent_mu_t0 + non_competing_parties["results"]
 
         return (
             pm.Deterministic(
