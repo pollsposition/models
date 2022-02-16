@@ -27,6 +27,17 @@ def standardize(series):
 
 
 class PresidentialElectionsModel:
+    """A model for the French 2022 presidential elections.
+
+    The model is based on gaussian processes that are used to model the time
+    evolution of poll results as they arrive and the prediction based on
+    fundamental data.
+
+    We pool information from past elections by assigning candidates to a set of
+    political families and putting a hierarchical model over these families.
+
+    """
+
     def __init__(
         self,
         variance_weight: List[float],
@@ -423,16 +434,15 @@ class PresidentialElectionsModel:
         polls: pd.DataFrame = None,
         continuous_predictors: pd.DataFrame = None,
     ) -> pm.Model:
-        """
-        Build and return a pymc3 model.
+        """Build and return a pymc3 model for the poll results and fundamental data.
 
         Parameters
         ----------
-        polls: pd.DataFrame, default None
+        polls
             All raw polls from past and current elections.
             Specify only if you want to run the model on another dataset than the training one (e.g
             for out-of-sample predictions).
-        continuous_predictors: pd.DataFrame, default None
+        continuous_predictors
             A dataframe of all the continuous predictors.
             Specify only if you want to run the model on another dataset than the training one (e.g
             for out-of-sample predictions).
