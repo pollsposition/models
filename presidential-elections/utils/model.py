@@ -1,5 +1,6 @@
 import json
 from typing import Dict, List, Tuple
+from urllib.request import urlopen
 
 import arviz
 import numpy as np
@@ -146,9 +147,9 @@ class PresidentialElectionsModel:
         ).reset_index(drop=True)
 
     def _load_2022_polls(self) -> pd.DataFrame:
-        with open("../../../data/sondages/presidentielles_2022.json") as f:
-            raw_polls = json.load(f)
-
+        url = "https://raw.githubusercontent.com/pollsposition/data/main/sondages/presidentielles_2022.json"
+        response = urlopen(url)
+        raw_polls = json.loads(response.read())
         new_polls = self._clean_up_json(raw_polls)
         return self._format_2022_polls(new_polls)
 
