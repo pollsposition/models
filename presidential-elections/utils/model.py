@@ -26,7 +26,7 @@ def standardize(series):
     return (series - series.mean()) / series.std()
 
 
-class ModelBuilder:
+class PresidentialElectionsModel:
     def __init__(
         self,
         variance_weight: List[float],
@@ -479,7 +479,7 @@ class ModelBuilder:
                 house_effects,
                 house_election_effects,
                 data_containers,
-                non_competing_parties
+                non_competing_parties,
             )
 
             concentration = pm.InverseGamma("concentration", mu=1000, sigma=200)
@@ -531,14 +531,14 @@ class ModelBuilder:
         non_competing_parties = {
             "polls_multiplicative": is_here.values,
             "polls_additive": is_here.replace(to_replace=0, value=-10)
-                .replace(to_replace=1, value=0)
-                .values,
+            .replace(to_replace=1, value=0)
+            .values,
             "results": self.results_mult[self.parties_complete]
-                .astype(bool)
-                .astype(int)
-                .replace(to_replace=0, value=-10)
-                .replace(to_replace=1, value=0)
-                .values,
+            .astype(bool)
+            .astype(int)
+            .replace(to_replace=0, value=-10)
+            .replace(to_replace=1, value=0)
+            .values,
         }
 
         data_containers = dict(
@@ -590,12 +590,14 @@ class ModelBuilder:
 
         lsd_intercept = pm.Normal("election_party_intercept_sd_intercept", sigma=0.5)
         lsd_party_effect = ZeroSumNormal(
-            "election_party_intercept_sd_party_effect", sigma=0.5, dims="parties_complete"
+            "election_party_intercept_sd_party_effect",
+            sigma=0.5,
+            dims="parties_complete",
         )
         election_party_intercept_sd = pm.Deterministic(
             "election_party_intercept_sd",
             aet.exp(lsd_intercept + lsd_party_effect),
-            dims="parties_complete"
+            dims="parties_complete",
         )
 
         election_party_intercept = (
