@@ -47,6 +47,7 @@ class PresidentialElectionsModel:
     ):
         """
         Initialize the model builder.
+
         Parameters
         ----------
         variance_weight: List[float]
@@ -439,13 +440,18 @@ class PresidentialElectionsModel:
         Parameters
         ----------
         polls
-            All raw polls from past and current elections.
-            Specify only if you want to run the model on another dataset than the training one (e.g
-            for out-of-sample predictions).
+            Poll results from past and current elections. This only needs to be
+            specified for out-of-sample predictions to run the model on another
+            dataset than the training data.
         continuous_predictors
-            A dataframe of all the continuous predictors.
-            Specify only if you want to run the model on another dataset than the training one (e.g
-            for out-of-sample predictions).
+            Continuous predictors, or fundamentals. This only need to be
+            specified for out-of-sample predictions to run the model on another
+            dataset than the training data.
+
+        Returns
+        -------
+        A PyMC model in the form of a pymc.Model() instance.
+
         """
         (
             self.pollster_id,
@@ -461,13 +467,18 @@ class PresidentialElectionsModel:
             )
 
             # --------------------------------------------------------
-            #                        PARTY INTERCEPT
+            #                   BASELINE COMPONENTS
             # --------------------------------------------------------
+
+            # Baseline latent popularity for each political family. Shared
+            # across elections.
             party_intercept_sd = pm.HalfNormal("party_intercept_sd", 0.5)
             party_intercept = ZeroSumNormal(
                 "party_intercept", sigma=party_intercept_sd, dims="parties_complete"
             )
 
+            # Election-specific deviation from baseline of the latent popularity
+            # of each political family.
             lsd_intercept = pm.Normal(
                 "election_party_intercept_sd_intercept", sigma=0.5
             )
@@ -493,6 +504,10 @@ class PresidentialElectionsModel:
             # --------------------------------------------------------
             #                        HOUSE EFFECTS
             # --------------------------------------------------------
+
+            # Baseline for polls' bias towards the different political families.
+            # These biases are shared by pollsters, i.e. they can be interpreted
+            # as the market's bias.
             poll_bias = (
                 ZeroSumNormal(  # equivalent to no ZeroSum on pollsters in house_effects
                     "poll_bias",
@@ -501,6 +516,7 @@ class PresidentialElectionsModel:
                 )
             )
 
+            # Baseline for house effect (per political family)
             house_effects = ZeroSumNormal(
                 "house_effects",
                 sigma=0.15,
@@ -508,6 +524,7 @@ class PresidentialElectionsModel:
                 zerosum_axes=(0, 1),
             )
 
+            # Election-specific house effect (per political family)
             house_election_effects_sd = pm.HalfNormal(
                 "house_election_effects_sd",
                 0.15,
@@ -525,7 +542,15 @@ class PresidentialElectionsModel:
             )
 
             # --------------------------------------------------------
-            #                  UNEMPLOYMENT EFFECT
+            #                  FUNDAMENTAL COMPONENT
+            #
+            # It is commonly assumed that the results of the elections
+            # are mostly determined by economic fundamentals, and
+            # that the opinion "drifts" towards this result during the
+            # campaign, so to speak.
+            #
+            # The coefficient below accounts for the effect of the
+            # unemployment on the election result.
             # --------------------------------------------------------
 
             unemployment_effect = ZeroSumNormal(
@@ -535,7 +560,28 @@ class PresidentialElectionsModel:
             )
 
             # --------------------------------------------------------
-            #                  PARTY TIME WEIGHTS
+            #               TIME-VARYING COMPONENT
+            #
+            # The latent popularity of political families varies over
+            # the course of an election. We model this evolution with
+            # gaussian processes.
+            #
+            # We currently use gaussian processes with 3 different
+            # lengthscales to account for the typical timescales over which
+            # opinion can change.
+            #
+            # The time evolution has two components: one that is common to all
+            # elections (the baseline), and another one for each election,
+            # which is a deviation from the common baseline.
+            # --------------------------------------------------------
+
+            # Build the gaussian process basis functions
+            gp_basis_funcs, gp_basis_dim = make_gp_basis(
+                time=self.coords["countdown"], gp_config=self.gp_config, key="parties"
+            )
+
+            # Baseline (shared across elections) for the time-varying component
+            # of the latent popularity.
             # --------------------------------------------------------
             lsd_intercept = pm.Normal("lsd_intercept", sigma=0.3)
             lsd_party_effect = ZeroSumNormal(
@@ -547,8 +593,23 @@ class PresidentialElectionsModel:
                 dims="parties_complete",
             )
 
-            # --------------------------------------------------------
-            #             ELECTION PARTY TIME WEIGHTS
+            party_time_coefs_raw = ZeroSumNormal(
+                "party_time_coefs_raw",
+                sigma=1,
+                dims=(gp_basis_dim, "parties_complete"),
+                zerosum_axes=-1,
+            )
+            party_time_effect = pm.Deterministic(
+                "party_time_effect",
+                aet.tensordot(
+                    gp_basis_funcs,
+                    party_time_weight[None, ...] * party_time_coefs_raw,
+                    axes=(1, 0),
+                ),
+                dims=("countdown", "parties_complete"),
+            )
+
+            # Election-specific time-varying component of the latent popularity
             # --------------------------------------------------------
             lsd_party_effect = ZeroSumNormal(
                 "lsd_party_effect_election_party_amplitude",
@@ -579,33 +640,6 @@ class PresidentialElectionsModel:
                 dims=("parties_complete", "elections"),
             )
 
-            # --------------------------------------------------------
-            #               GAUSSIAN PROCESS BASIS
-            # --------------------------------------------------------
-            gp_basis_funcs, gp_basis_dim = make_gp_basis(
-                time=self.coords["countdown"], gp_config=self.gp_config, key="parties"
-            )
-            # --------------------------------------------------------
-            #                  PARTY GAUSSIAN PROCESS
-            # --------------------------------------------------------
-            party_time_coefs_raw = ZeroSumNormal(
-                "party_time_coefs_raw",
-                sigma=1,
-                dims=(gp_basis_dim, "parties_complete"),
-                zerosum_axes=-1,
-            )
-            party_time_effect = pm.Deterministic(
-                "party_time_effect",
-                aet.tensordot(
-                    gp_basis_funcs,
-                    party_time_weight[None, ...] * party_time_coefs_raw,
-                    axes=(1, 0),
-                ),
-                dims=("countdown", "parties_complete"),
-            )
-            # --------------------------------------------------------
-            #                  PARTY TIME GAUSSIAN PROCESS
-            # --------------------------------------------------------
             election_party_time_coefs = ZeroSumNormal(
                 "election_party_time_coefs",
                 sigma=election_party_time_weight[None, ...],
@@ -623,9 +657,17 @@ class PresidentialElectionsModel:
             )
 
             # --------------------------------------------------------
-            #                       REGRESSSION
+            #                      POLL RESULTS
+            #
+            # In this section we use the variables defined before to
+            # model the latent popularity of political families and how
+            # this popularity translates into poll results.
+            #
+            # This part of the model is used to inform predictions about
+            # the outcomes with the current state of polling; this is the
+            # only place where poll results enter the model.
             # --------------------------------------------------------
-            # regression for polls
+
             latent_mu = (
                 party_intercept
                 + election_party_intercept[data_containers["election_idx"]]
@@ -653,7 +695,42 @@ class PresidentialElectionsModel:
                 * non_competing_parties["polls_multiplicative"]
             )
 
-            # regression for results
+            noisy_popularity = pm.Deterministic(
+                "noisy_popularity",
+                aet.nnet.softmax(noisy_mu),
+                dims=("observations", "parties_complete"),
+            )
+
+            # The concentration parameter of a Dirichlet-Multinomial distribution
+            # can be interpreted as the effective number of trials.
+            #
+            # The mean (1000) is thus taken to be roughly the sample size of
+            # polls, and the standard deviation accounts for the variation in
+            # sample size.
+            concentration_polls = pm.InverseGamma(
+                "concentration_polls", mu=1000, sigma=200
+            )
+
+            pm.DirichletMultinomial(
+                "N_approve",
+                a=concentration_polls * noisy_popularity,
+                n=data_containers["observed_N"],
+                observed=data_containers["observed_polls"],
+                dims=("observations", "parties_complete"),
+            )
+
+            # --------------------------------------------------------
+            #                    ELECTION RESULTS
+            #
+            # In this section we use the variables defined before to model the
+            # political families' latent popularity and how it translates into
+            # results the day of the election.
+            #
+            # Results from previous elections enter the model here; poll
+            # results enter indirectly via the latent variable and the above
+            # regression.
+            # --------------------------------------------------------
+
             latent_mu_t0 = (
                 party_intercept
                 + election_party_intercept
@@ -666,31 +743,24 @@ class PresidentialElectionsModel:
             )
             latent_mu_t0 = latent_mu_t0 + non_competing_parties["results"]
 
-            noisy_popularity = pm.Deterministic(
-                "noisy_popularity",
-                aet.nnet.softmax(noisy_mu),
-                dims=("observations", "parties_complete"),
-            )
             latent_pop_t0 = pm.Deterministic(
                 "latent_pop_t0",
                 aet.nnet.softmax(latent_mu_t0),
                 dims=("elections", "parties_complete"),
             )
 
-            # --------------------------------------------------------
-            #                  RESPONSE MODEL
-            # --------------------------------------------------------
-            concentration = pm.InverseGamma("concentration", mu=1000, sigma=200)
-            pm.DirichletMultinomial(
-                "N_approve",
-                a=concentration * noisy_popularity,
-                n=data_containers["observed_N"],
-                observed=data_containers["observed_polls"],
-                dims=("observations", "parties_complete"),
+            # The concentration parameter of a Dirichlet-Multinomial distribution
+            # can be interpreted as the effective number of trials.
+            #
+            # The mean (1000) is thus taken to be roughly the sample size of
+            # polls, and the standard deviation accounts for the variation in
+            # sample size.
+            concentration_results = pm.InverseGamma(
+                "concentration_results", mu=1000, sigma=200
             )
             pm.DirichletMultinomial(
                 "R",
-                a=concentration * latent_pop_t0[:-1],
+                a=concentration_results * latent_pop_t0[:-1],
                 n=data_containers["results_N"],
                 observed=data_containers["observed_results"],
                 dims=("elections_observed", "parties_complete"),
