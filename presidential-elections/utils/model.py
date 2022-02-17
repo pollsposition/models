@@ -39,45 +39,50 @@ class PresidentialElectionsModel:
 
     """
 
+    political_families = [
+        "farleft",
+        "left",
+        "green",
+        "center",
+        "right",
+        "farright",
+        "souverainistes",
+        "other",
+    ]
+
     def __init__(
         self,
-        variance_weight: List[float],
-        election_to_predict: str,
+        election_date: str,
+        timescales: List[int] = [5, 14, 28],
+        weights: List[float] = None,
         test_cutoff: pd.Timedelta = None,
-        lengthscale: List[int] = [5, 14, 28],
     ):
         """
         Initialize the model builder.
 
         Parameters
         ----------
-        variance_weight: List[float]
-
-        election_to_predict: str
-            Election we want to predict out of sample.
-        test_cutoff: pd.Timedelta, default None
+        election_date
+            Date of the election whose result we want to predict.
+        timescales
+            The typical number of days over which the opinion is assumed to
+            move. We usually use several Gaussian Processes that each correspond
+            to a different timescale (in days).
+        weights
+            The weight to give to each timescale. Defaults to each timescale
+            having the same weight.
+        test_cutoff
             How much of the dataset for ``election_to_predict`` we want to cut to test the model.
             If 2 months for instance, the last two months of polls in the campaign won't be fed to
             the model.
-        lengthscale: List[int], default [5, 14, 28]
-
         """
-        self.parties_complete = [
-            "farleft",
-            "left",
-            "green",
-            "center",
-            "right",
-            "farright",
-            "souverainistes",
-            "other",
-        ]
+
         self.gp_config = {
-            "lengthscale": lengthscale,
+            "lengthscale": timescales,
             "kernel": "gaussian",
             "zerosum": True,
             "variance_limit": 0.95,
-            "variance_weight": variance_weight,
+            "variance_weight": weights,
         }
 
         polls = self._load_polls()
@@ -91,7 +96,7 @@ class PresidentialElectionsModel:
         _, self.unique_elections = self.polls_train["dateelection"].factorize()
         _, self.unique_pollsters = self.polls_train["sondage"].factorize()
         self.results_oos = self.results_mult[
-            self.results_mult.dateelection != election_to_predict
+            self.results_mult.dateelection != election_date
         ].copy()
 
         self._load_predictors()
@@ -248,7 +253,7 @@ class PresidentialElectionsModel:
     ) -> Tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame, pd.DataFrame]:
 
         results_raw, results_mult, polls = self._format_polls(
-            polls, self.parties_complete
+            polls, self.political_families
         )
         (
             polls_train,
@@ -327,14 +332,14 @@ class PresidentialElectionsModel:
         return self.cast_as_multinomial(results_mult)
 
     def cast_as_multinomial(self, df: pd.DataFrame) -> pd.DataFrame:
-        df[self.parties_complete] = (
-            (df[self.parties_complete] / 100)
+        df[self.political_families] = (
+            (df[self.political_families] / 100)
             .mul(df["samplesize"], axis=0)
             .round()
             .fillna(0)
             .astype(int)
         )
-        df["samplesize"] = df[self.parties_complete].sum(1)
+        df["samplesize"] = df[self.political_families].sum(1)
 
         return df
 
@@ -774,7 +779,7 @@ class PresidentialElectionsModel:
 
         COORDS = {
             "observations": data.index,
-            "parties_complete": self.parties_complete,
+            "parties_complete": self.political_families,
         }
         pollster_id, COORDS["pollsters"] = data["sondage"].factorize(sort=True)
         countdown_id, COORDS["countdown"] = data["countdown"].values, np.arange(
@@ -796,13 +801,13 @@ class PresidentialElectionsModel:
         if campaign_predictors is None:
             campaign_predictors = self.campaign_preds
 
-        is_here = polls[self.parties_complete].astype(bool).astype(int)
+        is_here = polls[self.political_families].astype(bool).astype(int)
         non_competing_parties = {
             "polls_multiplicative": is_here.values,
             "polls_additive": is_here.replace(to_replace=0, value=-10)
             .replace(to_replace=1, value=0)
             .values,
-            "results": self.results_mult[self.parties_complete]
+            "results": self.results_mult[self.political_families]
             .astype(bool)
             .astype(int)
             .replace(to_replace=0, value=-10)
@@ -833,7 +838,7 @@ class PresidentialElectionsModel:
             ),
             observed_polls=pm.Data(
                 "observed_polls",
-                polls[self.parties_complete].to_numpy(),
+                polls[self.political_families].to_numpy(),
                 dims=("observations", "parties_complete"),
             ),
             results_N=pm.Data(
@@ -843,7 +848,7 @@ class PresidentialElectionsModel:
             ),
             observed_results=pm.Data(
                 "observed_results",
-                self.results_oos[self.parties_complete].to_numpy(),
+                self.results_oos[self.political_families].to_numpy(),
                 dims=("elections_observed", "parties_complete"),
             ),
         )
@@ -903,7 +908,7 @@ class PresidentialElectionsModel:
         forecast_data_index = pd.DataFrame(
             data=0,  # just a placeholder
             index=pd.MultiIndex.from_frame(oos_data),
-            columns=self.parties_complete,
+            columns=self.political_families,
         )
         forecast_data = forecast_data_index.reset_index()
 
