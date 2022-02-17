@@ -45,6 +45,9 @@ def make_centered_gp_eigendecomp(
     variance_limit : float
         Controls how many of the eigen vectors of the GP are used. So, if
         ``variance_limit=1``, all eigen vectors are used.
+    variance_weight: Optional[List[float]]
+        The weight attributed to each covariance function when there are several
+        lengthscale. By default all lengthscales have the same weight.
     kernel : str
         Select the kernel function from the two available: gaussian or periodic.
     zerosum : bool
