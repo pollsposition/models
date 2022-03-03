@@ -30,12 +30,23 @@ def standardize(series):
 class PresidentialElectionsModel:
     """A model for the French 2022 presidential elections.
 
-    The model is based on gaussian processes that are used to model the time
-    evolution of poll results as they arrive and the prediction based on
-    fundamental data.
+    Poll and election results are modeled using a Dirichlet Multinomial
+    regression. We build upon the idea in [1,2]_ to use a backwards random walk
+    to link the prediction for the election results and the observed poll
+    results. The dependence between the succesive values of the latent
+    popularity is modeled using a multivariate gaussian process with a diagonal
+    covariance metic.
 
     We pool information from past elections by assigning candidates to a set of
     political families and putting a hierarchical model over these families.
+
+    References
+    ----------
+    .. [1]: Linzer, Drew A. “Dynamic Bayesian Forecasting of Presidential Elections in the States.”
+            Journal of the American Statistical Association 108, no. 501 (2013): 124–134.
+    .. [2]: Stoetzer, Lukas F., Marcel Neunhoeffer, Thomas Gschwend, Simon Munzert, and Sebastian Sternberg.
+            “Forecasting Elections in Multiparty Systems: A Bayesian Approach Combining Polls and Fundamentals.”
+            Political Analysis 27, no. 2 (2019): 255–262.
 
     """
 
