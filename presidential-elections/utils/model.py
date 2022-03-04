@@ -489,30 +489,28 @@ class PresidentialElectionsModel:
 
             # Baseline latent popularity for each political family. Shared
             # across elections.
-            party_intercept_sd = pm.HalfNormal("party_intercept_sd", 0.5)
-            party_intercept = ZeroSumNormal(
-                "party_intercept", sigma=party_intercept_sd, dims="parties_complete"
+            party_baseline_sd = pm.HalfNormal("party_baseline_sd", 0.5)
+            party_baseline = ZeroSumNormal(
+                "party_baseline", sigma=party_baseline_sd, dims="parties_complete"
             )
 
             # Election-specific deviation from baseline of the latent popularity
             # of each political family.
-            lsd_intercept = pm.Normal(
-                "election_party_intercept_sd_intercept", sigma=0.5
-            )
+            lsd_baseline = pm.Normal("election_party_baseline_sd_baseline", sigma=0.5)
             lsd_party_effect = ZeroSumNormal(
-                "election_party_intercept_sd_party_effect",
+                "election_party_baseline_sd_party_effect",
                 sigma=0.5,
                 dims="parties_complete",
             )
-            election_party_intercept_sd = pm.Deterministic(
-                "election_party_intercept_sd",
-                aet.exp(lsd_intercept + lsd_party_effect),
+            election_party_baseline_sd = pm.Deterministic(
+                "election_party_baseline_sd",
+                aet.exp(lsd_baseline + lsd_party_effect),
                 dims="parties_complete",
             )
-            election_party_intercept = (
+            election_party_baseline = (
                 ZeroSumNormal(  # as a GP over elections to account for order?
-                    "election_party_intercept",
-                    sigma=election_party_intercept_sd[None, :],
+                    "election_party_baseline",
+                    sigma=election_party_baseline_sd[None, :],
                     dims=("elections", "parties_complete"),
                     zerosum_axes=(0, 1),
                 )
@@ -600,13 +598,13 @@ class PresidentialElectionsModel:
             # Baseline (shared across elections) for the time-varying component
             # of the latent popularity.
             # --------------------------------------------------------
-            lsd_intercept = pm.Normal("lsd_intercept", sigma=0.3)
+            lsd_baseline = pm.Normal("lsd_baseline", sigma=0.3)
             lsd_party_effect = ZeroSumNormal(
                 "lsd_party_effect_party_amplitude", sigma=0.2, dims="parties_complete"
             )
             party_time_weight = pm.Deterministic(
                 "party_time_weight",
-                aet.exp(lsd_intercept + lsd_party_effect),
+                aet.exp(lsd_baseline + lsd_party_effect),
                 dims="parties_complete",
             )
 
@@ -686,8 +684,8 @@ class PresidentialElectionsModel:
             # --------------------------------------------------------
 
             latent_mu = (
-                party_intercept
-                + election_party_intercept[data_containers["election_idx"]]
+                party_baseline
+                + election_party_baseline[data_containers["election_idx"]]
                 + party_time_effect[data_containers["countdown_idx"]]
                 + election_party_time_effect[
                     data_containers["countdown_idx"], :, data_containers["election_idx"]
@@ -749,8 +747,8 @@ class PresidentialElectionsModel:
             # --------------------------------------------------------
 
             latent_mu_t0 = (
-                party_intercept
-                + election_party_intercept
+                party_baseline
+                + election_party_baseline
                 + party_time_effect[0]
                 + election_party_time_effect[0].T
                 + aet.dot(
@@ -938,7 +936,7 @@ class PresidentialElectionsModel:
             ppc = pm.fast_sample_posterior_predictive(
                 idata,
                 var_names=[
-                    "party_intercept",
+                    "party_baseline",
                     "latent_popularity",
                     "noisy_popularity",
                     "N_approve",
