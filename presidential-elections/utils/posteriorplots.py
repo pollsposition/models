@@ -229,7 +229,7 @@ def predictive_plot(
         #     label="Result",
         # )
         axes[i].axhline(
-            y=softmax(predictions["party_intercept"].mean(("chain", "draw"))).sel(
+            y=softmax(predictions["party_baseline"].mean(("chain", "draw"))).sel(
                 parties_complete=p
             ),
             xmin=-0.01,
